@@ -2,7 +2,7 @@
 
 ## 🎯 项目目标
 
-将 RobotX Server 的在线部署能力封装成独立的 CLI 工具，供 AI agents 使用。
+将 RobotX Server 的 deploy-only 能力封装成独立的 CLI 工具，供 AI agents 使用。
 
 ## ✅ 当前状态
 
@@ -13,7 +13,7 @@
 ### 1. CLI 工具
 - ✅ `robotx deploy` - 部署项目
 - ✅ `robotx status` - 查询状态
-- ✅ `robotx logs` - 查看日志
+- ⚠️ `robotx logs` - 历史命令，现已不支持（RobotX 不再提供远程构建日志）
 - ✅ `robotx publish` - 发布到生产
 - ✅ `robotx update` - 更新配置
 - ✅ `robotx mcp` - MCP 服务器模式

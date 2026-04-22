@@ -1,7 +1,6 @@
 package client
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -353,61 +352,6 @@ func (c *Client) UploadSource(projectID, sourcePath string, version *BuildVersio
 	return result.Commit, result.Build, nil
 }
 
-// TriggerBuild triggers a build for a commit (legacy API).
-func (c *Client) TriggerBuild(projectID, commitID string, version *BuildVersionInput) (*Build, error) {
-	payload := map[string]string{
-		"commit_id": commitID,
-	}
-	if version != nil {
-		if versionLabel := strings.TrimSpace(version.VersionLabel); versionLabel != "" {
-			payload["version_label"] = versionLabel
-		}
-		if sourceRef := strings.TrimSpace(version.SourceRef); sourceRef != "" {
-			payload["source_ref"] = sourceRef
-		}
-	}
-	body, err := json.Marshal(payload)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
-	}
-
-	resp, err := c.doRequest("POST", fmt.Sprintf("/api/projects/%s/builds", projectID), bytes.NewReader(body))
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		return nil, c.parseError(resp)
-	}
-
-	var build Build
-	if err := json.NewDecoder(resp.Body).Decode(&build); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
-	}
-	return &build, nil
-}
-
-// StartBuild requests the server to start a build by build ID.
-func (c *Client) StartBuild(projectID, buildID string) error {
-	body, err := json.Marshal(map[string]string{
-		"project_id": projectID,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to marshal request: %w", err)
-	}
-	resp, err := c.doRequest("POST", fmt.Sprintf("/api/builds/%s/start", buildID), bytes.NewReader(body))
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted {
-		return c.parseError(resp)
-	}
-	return nil
-}
-
 // GetBuild retrieves build information.
 func (c *Client) GetBuild(projectID, buildID string) (*Build, error) {
 	resp, err := c.doRequest("GET", fmt.Sprintf("/api/builds/%s", buildID), nil)
@@ -496,32 +440,6 @@ func (c *Client) PublishBuild(projectID, buildID string) (string, error) {
 	return "", nil
 }
 
-// GetBuildLogs retrieves build logs
-func (c *Client) GetBuildLogs(projectID, buildID string) (string, error) {
-	resp, err := c.doRequest("GET", fmt.Sprintf("/api/builds/%s/logs/stream", buildID), nil)
-	if err != nil {
-		return "", err
-	}
-	if resp.StatusCode == http.StatusNotFound && projectID != "" {
-		resp.Body.Close()
-		resp, err = c.doRequest("GET", fmt.Sprintf("/api/projects/%s/builds/%s/logs", projectID, buildID), nil)
-		if err != nil {
-			return "", err
-		}
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", c.parseError(resp)
-	}
-
-	logs, err := readSSE(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("failed to read logs: %w", err)
-	}
-	return logs, nil
-}
-
 // UploadBuildArtifacts uploads a zip of build outputs for a given build.
 func (c *Client) UploadBuildArtifacts(buildID, zipPath string) (*Build, error) {
 	body := &bytes.Buffer{}
@@ -566,22 +484,6 @@ func (c *Client) UploadBuildArtifacts(buildID, zipPath string) (*Build, error) {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 	return &build, nil
-}
-
-func readSSE(r io.Reader) (string, error) {
-	scanner := bufio.NewScanner(r)
-	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
-	var lines []string
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.HasPrefix(line, "data: ") {
-			lines = append(lines, strings.TrimPrefix(line, "data: "))
-		}
-	}
-	if err := scanner.Err(); err != nil {
-		return "", err
-	}
-	return strings.Join(lines, "\n"), nil
 }
 
 func (c *Client) doRequest(method, path string, body io.Reader) (*http.Response, error) {

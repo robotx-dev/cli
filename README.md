@@ -1,6 +1,6 @@
 # RobotX CLI
 
-RobotX CLI 用于将应用部署到 RobotX 平台，支持 `login` / `deploy` / `projects` / `versions` / `status` / `logs` / `publish`。
+RobotX CLI 用于将应用部署到 RobotX 平台，支持 `login` / `deploy` / `projects` / `versions` / `status` / `publish`。
 
 ## 当前状态
 
@@ -132,6 +132,7 @@ robotx deploy [project-path] \
 - `--version-label`：显式指定部署版本号（不传则服务端按数字递增）
 - `--source-ref`：记录来源标识（建议在 CI 中传 `tag/branch + commit`）
 - Preview 链接默认仅项目 owner 可访问；生产访问策略以 publish 版本策略为准
+- RobotX 不再支持云端 build；`--local-build` 只能保持为 `true`
 
 本地构建模式（默认开启）：
 
@@ -140,12 +141,6 @@ robotx deploy . --name my-app --local-build \
   [--install-command "npm ci"] \
   [--build-command "npm run build"] \
   [--output-dir dist]
-```
-
-如需改回云端构建且不自动发布：
-
-```bash
-robotx deploy . --name my-app --local-build=false --publish=false
 ```
 
 ### login
@@ -186,21 +181,13 @@ robotx versions --project-id proj_123 [--limit 20]
 查询项目和/或构建状态：
 
 ```bash
-robotx status [--project-id proj_123] [--build-id build_456] [--logs]
+robotx status [--project-id proj_123] [--build-id build_456]
 ```
 
 说明：
 
 - `--project-id` 与 `--build-id` 至少提供一个
-- 指定 `--logs` 时必须提供 `--build-id`
-
-### logs
-
-独立日志查询命令：
-
-```bash
-robotx logs --build-id build_456 [--project-id proj_123]
-```
+- `status --logs` 和 `robotx logs` 已不再可用，因为 RobotX 不再提供远程 build 日志
 
 ### publish
 
@@ -224,7 +211,7 @@ robotx mcp
 
 1. 下载 release 二进制
 2. 校验 checksum
-3. 执行 `robotx deploy --local-build=true --publish=true --output json`
+3. 执行 `robotx deploy --publish=true --output json`
 4. 输出 `project_id/build_id/status/url/version_label/version_seq/source_ref` 等字段
 
 示例工作流见：`.github/workflows/action-example.yml`。

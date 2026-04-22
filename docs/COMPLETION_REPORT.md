@@ -4,7 +4,7 @@
 
 **项目名称**: RobotX CLI - AI Agent 部署工具
 
-**项目目标**: 将 RobotX Server 的在线部署能力封装成独立的命令行工具和 skill，供 AI agents（如 Claude Code、Cursor 等）使用，使它们能够自动部署创建的项目。
+**项目目标**: 将 RobotX Server 的 deploy-only 能力封装成独立的命令行工具和 skill，供 AI agents（如 Claude Code、Cursor 等）使用，使它们能够自动部署创建的项目。
 
 **完成日期**: 2024-02-03
 
@@ -22,7 +22,7 @@
 |------|------|------|
 | `robotx deploy` | 部署项目到 RobotX | ✅ 完成 |
 | `robotx status` | 查询部署状态 | ✅ 完成 |
-| `robotx logs` | 查看构建日志 | ✅ 完成 |
+| `robotx logs` | 历史命令，现返回不支持错误 | ⚠️ 保留兼容 |
 | `robotx publish` | 发布到生产环境 | ✅ 完成 |
 | `robotx update` | 更新项目配置 | ✅ 完成 |
 | `robotx mcp` | MCP 服务器模式 | ✅ 完成 |

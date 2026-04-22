@@ -17,7 +17,7 @@
 ```bash
 robotx deploy   # 部署项目到 RobotX
 robotx status   # 查询部署状态
-robotx logs     # 查看构建日志
+robotx logs     # 历史命令，现已不支持
 robotx publish  # 发布到生产环境
 robotx update   # 更新项目配置
 robotx mcp      # MCP 服务器模式
@@ -167,8 +167,8 @@ YAML
 # 查询状态
 ./robotx status --project-id proj_xxx
 
-# 查看日志
-./robotx logs build_xxx
+# 发布指定版本
+./robotx publish --project-id proj_xxx --build-id build_xxx
 ```
 
 ---

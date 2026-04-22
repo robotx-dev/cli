@@ -27,7 +27,6 @@ var (
 type statusResponse struct {
 	Project *client.Project `json:"project,omitempty"`
 	Build   *client.Build   `json:"build,omitempty"`
-	Logs    string          `json:"logs,omitempty"`
 	URLs    *statusURLs     `json:"urls,omitempty"`
 }
 
@@ -41,15 +40,15 @@ func init() {
 
 	statusCmd.Flags().StringVarP(&statusProjectID, "project-id", "p", "", "Project ID")
 	statusCmd.Flags().StringVarP(&statusBuildID, "build-id", "b", "", "Build ID (optional)")
-	statusCmd.Flags().BoolVarP(&showLogs, "logs", "l", false, "Show build logs")
+	statusCmd.Flags().BoolVarP(&showLogs, "logs", "l", false, "Deprecated: build logs are no longer available")
 }
 
 func runStatus(cmd *cobra.Command, args []string) error {
 	if statusProjectID == "" && statusBuildID == "" {
 		return newCLIError("missing_argument", "at least one of --project-id or --build-id is required", 1, nil)
 	}
-	if showLogs && statusBuildID == "" {
-		return newCLIError("missing_argument", "--logs requires --build-id", 1, nil)
+	if showLogs {
+		return newCLIError("unsupported_feature", "build logs are unavailable because RobotX no longer runs remote builds", 1, nil)
 	}
 
 	baseURL := viper.GetString("base_url")
@@ -81,15 +80,6 @@ func runStatus(cmd *cobra.Command, args []string) error {
 			return newCLIError("api_error", "failed to get build", 2, err)
 		}
 		resp.Build = build
-
-		if showLogs {
-			logs, err := c.GetBuildLogs(statusProjectID, statusBuildID)
-			if err != nil {
-				return newCLIError("api_error", "failed to get logs", 2, err)
-			} else {
-				resp.Logs = logs
-			}
-		}
 
 		if resp.Project == nil && build.ProjectID != "" {
 			project, err := c.GetProject(build.ProjectID)
@@ -149,10 +139,6 @@ func runStatus(cmd *cobra.Command, args []string) error {
 		}
 	}
 	w.Flush()
-
-	if showLogs && resp.Logs != "" {
-		fmt.Printf("\n📋 Build Logs:\n%s\n", resp.Logs)
-	}
 	if resp.URLs != nil {
 		fmt.Printf("\n🌐 URLs:\n")
 		fmt.Printf("Preview: %s\n", resp.URLs.PreviewURL)

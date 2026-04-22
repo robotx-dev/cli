@@ -38,7 +38,6 @@ robotx deploy . --name my-app --output json
 robotx projects --limit 50 --output json
 robotx versions --project-id proj_123 --output json
 robotx status --project-id proj_123 --output json
-robotx logs --build-id build_456 --output json
 robotx publish --project-id proj_123 --build-id build_456 --output json
 ```
 
@@ -122,9 +121,8 @@ Action 输出：
 ## 6) 命令约束
 
 - `status`：`--project-id` 与 `--build-id` 至少提供一个
-- `status --logs`：必须带 `--build-id`
 - `versions`：必须带 `--project-id`
-- `logs`：使用 `--build-id` 或位置参数传入 build id
+- `status --logs` 与 `logs`：不再支持，因为 RobotX 不再提供远程 build 日志
 
 ## MCP 说明
 

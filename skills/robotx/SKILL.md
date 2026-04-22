@@ -27,7 +27,7 @@ Set credentials by config file (`~/.robotx.yaml`) or env vars:
 
 ## Auth pre-check and default login
 
-Before running any API command (`deploy`, `projects`, `versions`, `status`, `logs`, `publish`),
+Before running any API command (`deploy`, `projects`, `versions`, `status`, `publish`),
 verify local auth first.
 
 Recommended quick check:
@@ -64,7 +64,6 @@ For agents and workflows, always use structured output:
 - `robotx projects --limit 50 --output json`
 - `robotx versions --project-id proj_123 --output json`
 - `robotx status --project-id proj_123 --output json`
-- `robotx logs --build-id build_456 --output json`
 - `robotx publish --project-id proj_123 --build-id build_456 --output json`
 
 JSON is written to stdout. Progress logs are written to stderr.
@@ -96,16 +95,10 @@ robotx projects [--limit 50]
 ### Status
 
 ```bash
-robotx status --project-id proj_123 [--build-id build_456] [--logs]
+robotx status --project-id proj_123 [--build-id build_456]
 ```
 
-`status` accepts `--project-id`, `--build-id`, or both. If `--logs` is set, `--build-id` is required.
-
-### Logs
-
-```bash
-robotx logs --build-id build_456 [--project-id proj_123]
-```
+`status` accepts `--project-id`, `--build-id`, or both. Build logs are no longer available because RobotX no longer runs remote builds.
 
 ### Publish
 

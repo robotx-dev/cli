@@ -256,20 +256,11 @@ export class RobotXClient {
   }
 
   /**
-   * Get build logs
-   *
-   * @param buildId - Build ID to get logs for
-   * @returns Build logs as string
-   *
-   * @example
-   * ```typescript
-   * const logs = await client.logs('build_123');
-   * console.log(logs);
-   * ```
+   * Deprecated. RobotX no longer provides remote build logs.
    */
   async logs(buildId: string): Promise<string> {
-    const result = await this.runCommand(['logs', buildId]);
-    return result.logs || '';
+    void buildId;
+    throw new Error('RobotX no longer provides remote build logs');
   }
 
   /**

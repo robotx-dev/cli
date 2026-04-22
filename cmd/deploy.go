@@ -23,8 +23,9 @@ var deployCmd = &cobra.Command{
 	Long: `Deploy a project to RobotX platform. This command will:
 1. Resolve project by name (create-or-update)
 2. Package and upload source code
-3. Trigger a build
-4. Wait for build completion
+3. Build locally in your current workspace
+4. Upload build artifacts to the created build
+5. Wait for build completion if needed
 5. Publish to production by default (use --publish=false to disable)`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runDeploy,
@@ -70,7 +71,7 @@ func init() {
 	deployCmd.Flags().BoolVar(&publish, "publish", true, "Publish to production after successful build")
 	deployCmd.Flags().BoolVar(&wait, "wait", true, "Wait for build completion")
 	deployCmd.Flags().IntVar(&timeout, "timeout", 600, "Build timeout in seconds")
-	deployCmd.Flags().BoolVar(&localBuild, "local-build", true, "Build locally and upload artifacts instead of using RobotX cloud build")
+	deployCmd.Flags().BoolVar(&localBuild, "local-build", true, "Build locally and upload artifacts (must remain true; RobotX cloud build is no longer supported)")
 	deployCmd.Flags().StringVar(&installCmd, "install-command", "", "Override install command for local build")
 	deployCmd.Flags().StringVar(&buildCmd, "build-command", "", "Override build command for local build")
 	deployCmd.Flags().StringVar(&outputDir, "output-dir", "", "Override output directory for local build")
@@ -101,6 +102,9 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 	}
 	if apiKey == "" {
 		return newCLIError("missing_api_key", "API key is required (use --api-key or set ROBOTX_API_KEY)", 1, nil)
+	}
+	if !localBuild {
+		return newCLIError("unsupported_feature", "RobotX no longer supports remote build; remove --local-build=false and run the build locally", 1, nil)
 	}
 
 	c := client.NewClient(baseURL, apiKey)
@@ -158,96 +162,66 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 		logf("✅ Build created: %s\n", build.BuildID)
 	}
 
-	if localBuild {
-		if build == nil || build.BuildID == "" {
-			return newCLIError("local_build_unsupported", "server did not return a build ID; local build upload is not supported by this server", 2, nil)
-		}
-		plan := (*client.BuildPlan)(nil)
-		if commit != nil && commit.ScannerResult != nil {
-			plan = commit.ScannerResult.BuildPlan
-		}
-		if err := runLocalBuild(absPath, plan); err != nil {
-			return newCLIError("build_failed", "local build failed", 3, err)
-		}
-		artifactDir := outputDir
-		if artifactDir == "" && plan != nil && strings.TrimSpace(plan.OutputDir) != "" {
-			artifactDir = strings.TrimSpace(plan.OutputDir)
-		}
-		if artifactDir == "" {
-			artifactDir = "dist"
-		}
-		artifactPath := filepath.Join(absPath, artifactDir)
-		if stat, err := os.Stat(artifactPath); err != nil || !stat.IsDir() {
-			return newCLIError("build_failed", fmt.Sprintf("output directory missing: %s", artifactPath), 3, nil)
-		}
-		logf("📦 Packaging build output from: %s\n", artifactPath)
-		artifactZip, err := packageDirectory(artifactPath)
-		if err != nil {
-			return newCLIError("build_failed", "failed to package build output", 3, err)
-		}
-		defer os.Remove(artifactZip)
-		logf("✅ Build output packaged: %s\n", artifactZip)
-
-		logf("⬆️  Uploading build artifacts...\n")
-		build, err = c.UploadBuildArtifacts(build.BuildID, artifactZip)
-		if err != nil {
-			return newCLIError("api_error", "failed to upload build artifacts", 2, err)
-		}
-		logf("✅ Build artifacts uploaded\n")
-	} else {
-		logf("🔨 Triggering build...\n")
-		if build == nil || build.BuildID == "" {
-			if commit == nil || commit.CommitID == "" {
-				return newCLIError("build_failed", "no commit ID available to trigger build", 3, nil)
-			}
-			build, err = c.TriggerBuild(proj.ProjectID, commit.CommitID, version)
-			if err != nil {
-				return newCLIError("api_error", "failed to trigger build", 2, err)
-			}
-			logf("✅ Build started: %s\n", build.BuildID)
-		} else {
-			if err := c.StartBuild(proj.ProjectID, build.BuildID); err != nil {
-				return newCLIError("api_error", "failed to start build", 2, err)
-			}
-			logf("✅ Build started: %s\n", build.BuildID)
-		}
+	if build == nil || build.BuildID == "" {
+		return newCLIError("local_build_unsupported", "server did not return a build ID; local build upload is not supported by this server", 2, nil)
 	}
+	plan := (*client.BuildPlan)(nil)
+	if commit != nil && commit.ScannerResult != nil {
+		plan = commit.ScannerResult.BuildPlan
+	}
+	if err := runLocalBuild(absPath, plan); err != nil {
+		return newCLIError("build_failed", "local build failed", 3, err)
+	}
+	artifactDir := outputDir
+	if artifactDir == "" && plan != nil && strings.TrimSpace(plan.OutputDir) != "" {
+		artifactDir = strings.TrimSpace(plan.OutputDir)
+	}
+	if artifactDir == "" {
+		artifactDir = "dist"
+	}
+	artifactPath := filepath.Join(absPath, artifactDir)
+	if stat, err := os.Stat(artifactPath); err != nil || !stat.IsDir() {
+		return newCLIError("build_failed", fmt.Sprintf("output directory missing: %s", artifactPath), 3, nil)
+	}
+	logf("📦 Packaging build output from: %s\n", artifactPath)
+	artifactZip, err := packageDirectory(artifactPath)
+	if err != nil {
+		return newCLIError("build_failed", "failed to package build output", 3, err)
+	}
+	defer os.Remove(artifactZip)
+	logf("✅ Build output packaged: %s\n", artifactZip)
+
+	logf("⬆️  Uploading build artifacts...\n")
+	build, err = c.UploadBuildArtifacts(build.BuildID, artifactZip)
+	if err != nil {
+		return newCLIError("api_error", "failed to upload build artifacts", 2, err)
+	}
+	logf("✅ Build artifacts uploaded\n")
 
 	if wait {
 		if build == nil || build.BuildID == "" {
 			return newCLIError("build_failed", "no build ID available to wait for completion", 3, nil)
 		}
-		logf("⏳ Waiting for build to complete (timeout: %ds)...\n", timeout)
-		build, err = waitForBuild(c, proj.ProjectID, build.BuildID, timeout)
-		if err != nil {
-			return newCLIError("build_failed", "build failed", 3, err)
+		if build.Status != "success" {
+			logf("⏳ Waiting for build to complete (timeout: %ds)...\n", timeout)
+			build, err = waitForBuild(c, proj.ProjectID, build.BuildID, timeout)
+			if err != nil {
+				return newCLIError("build_failed", "build failed", 3, err)
+			}
 		}
 
 		if build.Status == "success" {
-			if localBuild {
-				logf("✅ Local build completed successfully!\n")
-			} else {
-				logf("✅ Build completed successfully!\n")
-			}
+			logf("✅ Local build completed successfully!\n")
 			previewURL = resolvePreviewURL(baseURL, proj, build)
 			if previewURL != "" {
 				logf("🌐 Preview URL: %s\n", previewURL)
 			}
 		} else {
 			logf("❌ Build failed with status: %s\n", build.Status)
-
-			logs, err := c.GetBuildLogs(proj.ProjectID, build.BuildID)
-			if err == nil && logs != "" {
-				logf("\n📋 Build logs:\n%s\n", logs)
-			}
 			return newCLIError("build_failed", fmt.Sprintf("build failed with status: %s", build.Status), 3, nil)
 		}
 	} else if build != nil && build.Status == "success" {
-		if localBuild {
-			logf("✅ Local build completed successfully!\n")
-		} else {
-			logf("✅ Build completed successfully!\n")
-		}
+		logf("✅ Local build completed successfully!\n")
 		previewURL = resolvePreviewURL(baseURL, proj, build)
 		if previewURL != "" {
 			logf("🌐 Preview URL: %s\n", previewURL)

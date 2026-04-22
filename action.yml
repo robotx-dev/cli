@@ -46,7 +46,7 @@ inputs:
     required: false
     default: "true"
   local-build:
-    description: "Build locally and upload artifacts"
+    description: "Build locally and upload artifacts. Must remain true; RobotX cloud build is no longer supported."
     required: false
     default: "true"
   wait:
@@ -202,6 +202,10 @@ runs:
 
         if [[ -z "${EFFECTIVE_API_KEY}" ]]; then
           echo "::error::missing input: api-key (or api_key)" >&2
+          exit 1
+        fi
+        if [[ "${INPUT_LOCAL_BUILD}" != "true" ]]; then
+          echo "::error::RobotX no longer supports remote build; local-build must remain true" >&2
           exit 1
         fi
 

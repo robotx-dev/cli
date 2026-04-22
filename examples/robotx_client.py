@@ -218,23 +218,10 @@ class RobotXClient:
 
     def logs(self, build_id: str) -> str:
         """
-        Get build logs
-
-        Args:
-            build_id: Build ID to get logs for
-
-        Returns:
-            Build logs as string
-
-        Raises:
-            RobotXAPIError: If API call fails
-
-        Example:
-            >>> logs = client.logs('build_123')
-            >>> print(logs)
+        Deprecated. RobotX no longer provides remote build logs.
         """
-        result = self._run_command(['logs', build_id])
-        return result.get('logs', '')
+        _ = build_id
+        raise RobotXError('RobotX no longer provides remote build logs')
 
     def publish(self, project_id: str, build_id: str) -> Dict[str, Any]:
         """
