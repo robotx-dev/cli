@@ -1,6 +1,6 @@
 # Binaries
 /robotx
-robotx-*
+/robotx-*
 
 # Go build artifacts
 *.exe
