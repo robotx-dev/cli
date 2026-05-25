@@ -42,6 +42,16 @@ func newCLIError(code, message string, exitCode int, err error) *cliError {
 	}
 }
 
+func newCLIErrorWithDetails(code, message string, exitCode int, details interface{}, err error) *cliError {
+	return &cliError{
+		Code:     code,
+		Message:  message,
+		Details:  details,
+		ExitCode: exitCode,
+		Err:      err,
+	}
+}
+
 func isJSONOutput() bool {
 	if outputJSON || strings.EqualFold(outputFormat, "json") {
 		return true

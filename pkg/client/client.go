@@ -19,6 +19,29 @@ type Client struct {
 	httpClient *http.Client
 }
 
+type APIError struct {
+	StatusCode        int
+	Code              string
+	Message           string
+	Name              string
+	ExistingProjectID string
+	Suggestions       []string
+}
+
+func (e *APIError) Error() string {
+	if e == nil {
+		return ""
+	}
+	msg := strings.TrimSpace(e.Message)
+	if msg == "" {
+		msg = "API error"
+	}
+	if strings.TrimSpace(e.Code) != "" {
+		return fmt.Sprintf("API error (status %d, code %s): %s", e.StatusCode, strings.TrimSpace(e.Code), msg)
+	}
+	return fmt.Sprintf("API error (status %d): %s", e.StatusCode, msg)
+}
+
 func NewClient(baseURL, apiKey string) *Client {
 	return &Client{
 		baseURL: baseURL,
@@ -107,8 +130,9 @@ type Build struct {
 
 // CreateProjectRequest represents project creation request
 type CreateProjectRequest struct {
-	Name       string `json:"name"`
-	Visibility string `json:"visibility,omitempty"`
+	Name           string `json:"name"`
+	Visibility     string `json:"visibility,omitempty"`
+	ConflictPolicy string `json:"conflict_policy,omitempty"`
 }
 
 // CreateProject creates a new project
@@ -518,6 +542,18 @@ func (c *Client) parseError(resp *http.Response) error {
 		if msg == "" {
 			msg = strings.TrimSpace(errResp.Detail)
 		}
+		apiErr := &APIError{
+			StatusCode: resp.StatusCode,
+			Code:       strings.TrimSpace(errResp.Code),
+		}
+		if values, ok := errResp.Error.(map[string]interface{}); ok {
+			if apiErr.Code == "" {
+				apiErr.Code = firstString(values, "code", "error_code")
+			}
+			apiErr.Name = firstString(values, "name")
+			apiErr.ExistingProjectID = firstString(values, "existing_project_id", "project_id")
+			apiErr.Suggestions = stringList(values["suggestions"])
+		}
 		if msg == "" {
 			switch v := errResp.Error.(type) {
 			case string:
@@ -535,10 +571,8 @@ func (c *Client) parseError(resp *http.Response) error {
 		}
 
 		if msg != "" {
-			if strings.TrimSpace(errResp.Code) != "" {
-				return fmt.Errorf("API error (status %d, code %s): %s", resp.StatusCode, strings.TrimSpace(errResp.Code), msg)
-			}
-			return fmt.Errorf("API error (status %d): %s", resp.StatusCode, msg)
+			apiErr.Message = msg
+			return apiErr
 		}
 	}
 
@@ -547,4 +581,31 @@ func (c *Client) parseError(resp *http.Response) error {
 		return fmt.Errorf("API error: status %d", resp.StatusCode)
 	}
 	return fmt.Errorf("API error: status %d, body: %s", resp.StatusCode, trimmedBody)
+}
+
+func firstString(values map[string]interface{}, keys ...string) string {
+	for _, key := range keys {
+		raw, ok := values[key]
+		if !ok {
+			continue
+		}
+		if s, ok := raw.(string); ok && strings.TrimSpace(s) != "" {
+			return strings.TrimSpace(s)
+		}
+	}
+	return ""
+}
+
+func stringList(raw interface{}) []string {
+	values, ok := raw.([]interface{})
+	if !ok {
+		return nil
+	}
+	out := make([]string, 0, len(values))
+	for _, value := range values {
+		if s, ok := value.(string); ok && strings.TrimSpace(s) != "" {
+			out = append(out, strings.TrimSpace(s))
+		}
+	}
+	return out
 }
