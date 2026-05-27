@@ -1,6 +1,6 @@
 # RobotX CLI
 
-RobotX CLI 用于将应用部署到 RobotX 平台，支持 `login` / `deploy` / `projects` / `versions` / `status` / `publish`。
+RobotX CLI 用于将应用部署到 RobotX 平台，支持 `login` / `deploy` / `access` / `doctor` / `projects` / `versions` / `status` / `publish`。
 
 ## 当前状态
 
@@ -31,6 +31,8 @@ curl -fsSL https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts
 - `ROBOTX_INSTALL_DIR=$HOME/.local/bin`
 - `ROBOTX_REPO=haibingtown/robotx_cli`
 - `ROBOTX_AUTO_PATH=1`（默认，自动写入 shell profile）或 `0`
+- `ROBOTX_CONNECT_TIMEOUT=10`（默认连接超时秒数）
+- `ROBOTX_MAX_TIME=300`（默认单次下载最长秒数）
 
 ### 方式 2: 从源码安装
 
@@ -58,21 +60,21 @@ curl -fsSL https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts
 支持配置文件 `~/.robotx.yaml`：
 
 ```yaml
-base_url: https://api.robotx.xin
+base_url: https://robotx.xin
 api_key: your-api-key
 ```
 
 或使用环境变量：
 
 ```bash
-export ROBOTX_BASE_URL=https://api.robotx.xin
+export ROBOTX_BASE_URL=https://robotx.xin
 export ROBOTX_API_KEY=your-api-key
 ```
 
 也可使用 Web 登录自动写入凭证：
 
 ```bash
-robotx login --base-url https://api.robotx.xin
+robotx login --base-url https://robotx.xin
 ```
 
 ## 输出模式
@@ -114,13 +116,14 @@ robotx login --base-url https://api.robotx.xin
 
 ### deploy
 
-部署新项目或已有项目（`--name` 默认 create-or-update，同 owner 同名复用）。
+部署新项目或更新当前工作区已记录的项目。默认新建项目时会避免覆盖同名旧项目；如需旧版“按名称复用”行为，显式使用 `--upsert --name my-app`。
 
 ```bash
 robotx deploy [project-path] \
   [--name my-app] \
   [--version-label v1.2.3] [--source-ref "tag:v1.2.3@<sha>"] \
-  [--publish=true] [--local-build=true] [--wait=true] [--timeout 600]
+  [--publish=true] [--local-build=true] [--wait=true] [--timeout 600] \
+  [--access unchanged|open|login|private] [--verify-url]
 ```
 
 项目名规则（与服务端一致）：长度 4-63，仅允许小写字母/数字/`-`，且首尾必须是字母或数字。
@@ -131,7 +134,10 @@ robotx deploy [project-path] \
 - `--publish=true`：构建成功后自动发布
 - `--version-label`：显式指定部署版本号（不传则服务端按数字递增）
 - `--source-ref`：记录来源标识（建议在 CI 中传 `tag/branch + commit`）
+- `--access`：部署成功后更新访问策略；默认 `unchanged`
+- `--verify-url`：显式检查生产链接是否能匿名打开
 - Preview 链接默认仅项目 owner 可访问；生产访问策略以 publish 版本策略为准
+- `--visibility public` 只是项目可见性，不等于“未登录可直接访问”；匿名公开请用 `--access open` 或 `robotx access open`
 - RobotX 不再支持云端 build；`--local-build` 只能保持为 `true`
 
 本地构建模式（默认开启）：
@@ -148,7 +154,7 @@ robotx deploy . --name my-app --local-build \
 通过设备码 + 浏览器授权登录，并自动写入 API 凭证到配置文件：
 
 ```bash
-robotx login --base-url https://api.robotx.xin
+robotx login --base-url https://robotx.xin
 ```
 
 常用参数：
@@ -164,6 +170,28 @@ robotx login --base-url https://api.robotx.xin
 
 ```bash
 robotx projects [--limit 50]
+```
+
+### access
+
+查看或修改项目访问策略：
+
+```bash
+robotx access status --project-id proj_123
+robotx access open --project-id proj_123      # 未登录可直接访问
+robotx access login --project-id proj_123     # 需要 RobotX 登录
+robotx access private --project-id proj_123   # 白名单私有
+```
+
+说明：`open` 会设置匿名公开访问；`login` 是公开项目但需要平台登录；`private` 是白名单访问。
+
+### doctor
+
+检查本机 CLI、配置和登录态，不会创建或修改项目：
+
+```bash
+robotx doctor
+robotx doctor --output json
 ```
 
 ### versions
@@ -221,6 +249,7 @@ robotx mcp
 - 支持输入别名：`base_url`/`api_key`（等价于 `base-url`/`api-key`）
 - 支持输入别名：`version_label`/`source_ref`（等价于 `version-label`/`source-ref`）
 - 未显式传 `source-ref` 时，action 会默认使用 `GITHUB_REF` + `GITHUB_SHA` 生成来源标识
+- 支持 `access: open|login|private|unchanged` 和 `verify-url: true`
 - `version: source` 可在 CI 中直接从 action 源码构建 CLI（适合验证 `@main` 最新变更）
 
 ## Release

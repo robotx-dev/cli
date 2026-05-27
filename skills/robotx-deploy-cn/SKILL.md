@@ -91,10 +91,12 @@ which robotx || which robotx_cli
 robotx --version
 robotx deploy --help
 robotx targets --help
+robotx access --help
+robotx doctor --help
 robotx --help
 ```
 
-如果本机安装的 CLI 和项目源码说明不一致，优先相信当前命令的实际 `--help` 输出和本地源码，不要凭旧记忆猜参数。当前 CLI 可能没有 `domain`、`access-policy`、`verify` 之类命令；没有命令时不要承诺能直接绑定自有域名或修改访问策略。
+如果本机安装的 CLI 和项目源码说明不一致，优先相信当前命令的实际 `--help` 输出和本地源码，不要凭旧记忆猜参数。当前 CLI 可能没有 `domain`、`access`、`verify-url` 之类命令；没有命令时不要承诺能直接绑定自有域名或修改访问策略。
 
 如果缺失，优先安装 release 二进制：
 
@@ -187,6 +189,18 @@ robotx deploy . \
   --publish=true \
   --wait=true \
   --output json
+```
+
+如果用户明确要求“公开可访问、未登录可直接打开”，新建或更新时优先加：
+
+```bash
+--access open --verify-url
+```
+
+如果项目已经发布成功，只是需要改成未登录可访问，使用：
+
+```bash
+robotx access open --project-id proj_123 --output json
 ```
 
 更新本文件夹已记录网站的内部命令：
@@ -304,8 +318,9 @@ robotx status --project-id proj_123 --build-id build_456 --output json
 把“发布成功”和“访问成功”分开判断：
 
 - 发布成功：以 `robotx deploy --output json` 和 `robotx status --output json` 为准。
-- 匿名访问成功：用浏览器或 `curl` 检查链接能否未登录打开。
+- 匿名访问成功：优先用 `robotx deploy --access open --verify-url --output json` 的 `access_check` 判断；旧 CLI 才用浏览器或 `curl` 检查链接能否未登录打开。
 - 如果 `status` 是 success，但 `production_url` 或 `preview_url` 返回 401/403，这不是部署失败，而是 RobotX 应用访问层需要登录、成员权限、邀请码或签名链接。
+- 如果用户要求未登录可访问，发布成功后 401/403 的下一步是 `robotx access open --project-id ... --output json`，不是重新部署。
 - 预览链接通常更偏向登录态验证；预览 401 时不要重部署，先说明访问策略。
 - 对低技术用户汇报时，说“发布成功，但这个链接需要 RobotX 登录后访问”，不要说“发布失败”。
 
@@ -391,6 +406,15 @@ robotx status --project-id proj_123 --build-id build_456 --output json
 robotx publish --project-id proj_123 --build-id build_456 --output json
 ```
 
+查看或修改访问策略：
+
+```bash
+robotx access status --project-id proj_123 --output json
+robotx access open --project-id proj_123 --output json
+robotx access login --project-id proj_123 --output json
+robotx access private --project-id proj_123 --output json
+```
+
 查看本地网站记录：
 
 ```bash
@@ -412,7 +436,7 @@ robotx targets remove <记录名> --output json
 | `missing_base_url` | “还没有配置 RobotX 服务地址。” | 本地登录，或让 CI 配置环境变量 |
 | `missing_api_key` | “还没有登录 RobotX。” | 本地运行登录流程；CI 使用 secret |
 | API 命令里的 `401` / `403` | “登录状态失效，或者当前账号没有权限发布。” | 重新登录或换有权限的账号 |
-| 链接访问返回 `401`，但 `status` 是 success | “发布成功，但这个链接需要 RobotX 登录后访问。” | 不要重部署；说明访问策略，必要时检查 access policy |
+| 链接访问返回 `401`，但 `status` 是 success | “发布成功，但这个链接需要 RobotX 登录后访问。” | 如果用户要未登录可访问，执行 `robotx access open --project-id ...`；否则说明访问策略 |
 | 预览链接返回 `401` | “预览链接需要登录态验证。” | 不要重部署；用正式发布状态和 `status` 判断部署是否成功 |
 | `proxyconnect` / `operation not permitted` | “当前执行环境暂时没有网络权限。” | 申请网络/沙箱权限后重试原命令 |
 | `invalid_project_name` | “项目名格式不符合发布要求。” | 自动转成小写英文短横线名称，必要时问用户确认 |

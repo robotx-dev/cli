@@ -64,6 +64,42 @@ type Project struct {
 	UpdatedAt   time.Time           `json:"updated_at"`
 }
 
+type AccessPolicy struct {
+	RequirePlatformLogin bool              `json:"require_platform_login"`
+	Credentials          *CredentialConfig `json:"credentials,omitempty"`
+	Version              int               `json:"version,omitempty"`
+}
+
+type CredentialConfig struct {
+	InviteCode      *InviteCodePublic `json:"invite_code,omitempty"`
+	AllowSignedLink bool              `json:"allow_signed_link,omitempty"`
+	Allowlist       bool              `json:"allowlist,omitempty"`
+}
+
+type InviteCodePublic struct {
+	Hint string `json:"hint,omitempty"`
+}
+
+type AccessPolicyInput struct {
+	RequirePlatformLogin bool             `json:"require_platform_login"`
+	Credentials          *CredentialInput `json:"credentials,omitempty"`
+}
+
+type CredentialInput struct {
+	Allowlist       bool `json:"allowlist,omitempty"`
+	AllowSignedLink bool `json:"allow_signed_link,omitempty"`
+}
+
+type AccessPolicyVersion struct {
+	Version int `json:"version"`
+}
+
+type URLCheck struct {
+	URL        string `json:"url"`
+	StatusCode int    `json:"status_code,omitempty"`
+	OK         bool   `json:"ok"`
+}
+
 type RuntimeRefVersion struct {
 	Ref          string    `json:"ref"`
 	ArtifactID   string    `json:"artifact_id,omitempty"`
@@ -203,6 +239,9 @@ func (c *Client) ListProjects(limit int) ([]*Project, error) {
 	projects, err := decodeProjectListResponse(rawBody)
 	if err != nil {
 		return nil, err
+	}
+	if limit > 0 && len(projects) > limit {
+		return projects[:limit], nil
 	}
 	return projects, nil
 }
@@ -462,6 +501,82 @@ func (c *Client) PublishBuild(projectID, buildID string) (string, error) {
 		return "", nil
 	}
 	return "", nil
+}
+
+func (c *Client) GetAccessPolicy(projectID string) (*AccessPolicy, error) {
+	resp, err := c.doRequest("GET", fmt.Sprintf("/api/projects/%s/access-policy", projectID), nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, c.parseError(resp)
+	}
+
+	var policy AccessPolicy
+	if err := json.NewDecoder(resp.Body).Decode(&policy); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+	return &policy, nil
+}
+
+func (c *Client) UpdateAccessPolicy(projectID string, input AccessPolicyInput) (*AccessPolicyVersion, error) {
+	body, err := json.Marshal(input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	resp, err := c.doRequest("PUT", fmt.Sprintf("/api/projects/%s/access-policy", projectID), bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, c.parseError(resp)
+	}
+
+	var version AccessPolicyVersion
+	if err := json.NewDecoder(resp.Body).Decode(&version); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+	return &version, nil
+}
+
+func (c *Client) CheckURL(rawURL string) (*URLCheck, error) {
+	rawURL = strings.TrimSpace(rawURL)
+	if rawURL == "" {
+		return nil, fmt.Errorf("url is required")
+	}
+	statusCode, err := c.checkURLWithMethod(http.MethodHead, rawURL)
+	if err != nil {
+		return nil, err
+	}
+	if statusCode == http.StatusMethodNotAllowed {
+		statusCode, err = c.checkURLWithMethod(http.MethodGet, rawURL)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &URLCheck{
+		URL:        rawURL,
+		StatusCode: statusCode,
+		OK:         statusCode >= 200 && statusCode < 400,
+	}, nil
+}
+
+func (c *Client) checkURLWithMethod(method, rawURL string) (int, error) {
+	req, err := http.NewRequest(method, rawURL, nil)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create request: %w", err)
+	}
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return 0, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	return resp.StatusCode, nil
 }
 
 // UploadBuildArtifacts uploads a zip of build outputs for a given build.

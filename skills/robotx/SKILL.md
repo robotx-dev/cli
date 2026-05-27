@@ -27,13 +27,13 @@ Set credentials by config file (`~/.robotx.yaml`) or env vars:
 
 ## Auth pre-check and default login
 
-Before running any API command (`deploy`, `projects`, `versions`, `status`, `publish`),
+Before running any API command (`deploy`, `access`, `projects`, `versions`, `status`, `publish`),
 verify local auth first.
 
 Recommended quick check:
 
 ```bash
-robotx projects --limit 1 --output json
+robotx doctor --output json
 ```
 
 If you see auth-related errors (`missing_base_url`, `missing_api_key`, `401`, `403`), always try `robotx login` first, then fall back only if login fails:
@@ -65,18 +65,25 @@ For agents and workflows, always use structured output:
 - `robotx versions --project-id proj_123 --output json`
 - `robotx status --project-id proj_123 --output json`
 - `robotx publish --project-id proj_123 --build-id build_456 --output json`
+- `robotx access status --project-id proj_123 --output json`
 
 JSON is written to stdout. Progress logs are written to stderr.
 
 ## Common commands
 
-### Deploy (create-or-update)
+### Deploy
 
 ```bash
-robotx deploy [path] --name "My App" [--publish] [--wait=true]
+robotx deploy [path] --create --target main --name my-app --publish=true --wait=true --output json
 ```
 
-By default, `deploy --name` is create-or-update for the same owner.
+Use `--access open` only when the user explicitly wants the production URL to be anonymously accessible. `--visibility public` alone does not mean anonymous access.
+
+```bash
+robotx deploy [path] --update --target main --access open --verify-url --output json
+```
+
+Use `--upsert --name my-app` only when the user explicitly wants legacy create-or-update behavior by name.
 
 ### Versions
 
@@ -91,6 +98,17 @@ robotx versions --project-id proj_123 [--limit 20]
 ```bash
 robotx projects [--limit 50]
 ```
+
+### Access
+
+```bash
+robotx access status --project-id proj_123
+robotx access open --project-id proj_123
+robotx access login --project-id proj_123
+robotx access private --project-id proj_123
+```
+
+`open` means anonymous access is allowed. `login` means RobotX login is required. `private` means allowlist access.
 
 ### Status
 

@@ -5,6 +5,9 @@ REPO="${ROBOTX_REPO:-haibingtown/robotx_cli}"
 REQUESTED_VERSION="${ROBOTX_VERSION:-latest}"
 INSTALL_DIR="${ROBOTX_INSTALL_DIR:-${HOME}/.local/bin}"
 AUTO_PATH="${ROBOTX_AUTO_PATH:-1}"
+CURL_CONNECT_TIMEOUT="${ROBOTX_CONNECT_TIMEOUT:-10}"
+CURL_MAX_TIME="${ROBOTX_MAX_TIME:-300}"
+CURL_ARGS=(-fsSL --connect-timeout "${CURL_CONNECT_TIMEOUT}" --max-time "${CURL_MAX_TIME}")
 
 if ! command -v curl >/dev/null 2>&1; then
   echo "curl is required" >&2
@@ -40,8 +43,9 @@ esac
 resolve_tag() {
   if [[ "${REQUESTED_VERSION}" == "latest" ]]; then
     local tag
+    echo "Resolving latest release tag from ${REPO}..." >&2
     tag="$(
-      curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" \
+      curl "${CURL_ARGS[@]}" "https://api.github.com/repos/${REPO}/releases/latest" \
         | sed -nE 's/^[[:space:]]*"tag_name":[[:space:]]*"([^"]+)".*/\1/p' \
         | tail -n1
     )"
@@ -75,8 +79,9 @@ cleanup() {
 trap cleanup EXIT
 
 echo "Downloading ${ARCHIVE_NAME} from ${TAG}..."
-curl -fsSL "${ARCHIVE_URL}" -o "${TMP_DIR}/${ARCHIVE_NAME}"
-curl -fsSL "${CHECKSUMS_URL}" -o "${TMP_DIR}/${CHECKSUMS_NAME}"
+curl "${CURL_ARGS[@]}" "${ARCHIVE_URL}" -o "${TMP_DIR}/${ARCHIVE_NAME}"
+echo "Downloading ${CHECKSUMS_NAME} from ${TAG}..."
+curl "${CURL_ARGS[@]}" "${CHECKSUMS_URL}" -o "${TMP_DIR}/${CHECKSUMS_NAME}"
 
 EXPECTED_SUM="$(awk -v file="${ARCHIVE_NAME}" '$2 == file {print $1}' "${TMP_DIR}/${CHECKSUMS_NAME}")"
 if [[ -z "${EXPECTED_SUM}" ]]; then
@@ -84,6 +89,7 @@ if [[ -z "${EXPECTED_SUM}" ]]; then
   exit 1
 fi
 
+echo "Verifying checksum..."
 if command -v shasum >/dev/null 2>&1; then
   ACTUAL_SUM="$(shasum -a 256 "${TMP_DIR}/${ARCHIVE_NAME}" | awk '{print $1}')"
 elif command -v sha256sum >/dev/null 2>&1; then
@@ -100,6 +106,7 @@ fi
 
 mkdir -p "${INSTALL_DIR}"
 
+echo "Installing robotx to ${INSTALL_DIR}..."
 tar -xzf "${TMP_DIR}/${ARCHIVE_NAME}" -C "${TMP_DIR}"
 install -m 0755 "${TMP_DIR}/robotx" "${INSTALL_DIR}/robotx"
 

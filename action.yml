@@ -22,7 +22,7 @@ inputs:
     required: false
     default: "."
   project-name:
-    description: "Project name (deploy will create-or-update for same owner)"
+    description: "Project name for new projects"
     required: false
     default: ""
   version-label:
@@ -57,6 +57,14 @@ inputs:
     description: "Build timeout (seconds)"
     required: false
     default: "600"
+  access:
+    description: "Access policy after deploy: unchanged, open, login, or private"
+    required: false
+    default: "unchanged"
+  verify-url:
+    description: "Check whether the production URL is anonymously reachable"
+    required: false
+    default: "false"
   version:
     description: "CLI install mode: release tag (e.g. v1.2.3), latest, or source"
     required: false
@@ -173,6 +181,8 @@ runs:
         INPUT_LOCAL_BUILD: ${{ inputs.local-build }}
         INPUT_WAIT: ${{ inputs.wait }}
         INPUT_TIMEOUT: ${{ inputs.timeout }}
+        INPUT_ACCESS: ${{ inputs.access }}
+        INPUT_VERIFY_URL: ${{ inputs.verify-url }}
         INPUT_EXTRA_ARGS: ${{ inputs.extra-args }}
       run: |
         set -euo pipefail
@@ -237,7 +247,7 @@ runs:
           fi
         fi
 
-        cmd=("${ROBOTX_BIN}" deploy "${INPUT_PROJECT_PATH}" --output json --base-url "${EFFECTIVE_BASE_URL}" --api-key "${EFFECTIVE_API_KEY}" --publish="${INPUT_PUBLISH}" --local-build="${INPUT_LOCAL_BUILD}" --wait="${INPUT_WAIT}" --timeout "${INPUT_TIMEOUT}")
+        cmd=("${ROBOTX_BIN}" deploy "${INPUT_PROJECT_PATH}" --output json --base-url "${EFFECTIVE_BASE_URL}" --api-key "${EFFECTIVE_API_KEY}" --publish="${INPUT_PUBLISH}" --local-build="${INPUT_LOCAL_BUILD}" --wait="${INPUT_WAIT}" --timeout "${INPUT_TIMEOUT}" --access "${INPUT_ACCESS}")
 
         if [[ -n "${INPUT_PROJECT_NAME}" ]]; then
           cmd+=(--name "${INPUT_PROJECT_NAME}")
@@ -247,6 +257,9 @@ runs:
         fi
         if [[ -n "${EFFECTIVE_SOURCE_REF}" ]]; then
           cmd+=(--source-ref "${EFFECTIVE_SOURCE_REF}")
+        fi
+        if [[ "${INPUT_VERIFY_URL}" == "true" ]]; then
+          cmd+=(--verify-url)
         fi
 
         if [[ -n "${INPUT_EXTRA_ARGS}" ]]; then

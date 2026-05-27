@@ -52,27 +52,39 @@ var (
 	workspaceRoot string
 	versionLabel  string
 	sourceRef     string
+	deployAccess  string
+	verifyURL     bool
 )
 
 var projectNamePattern = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{2,61}[a-z0-9]$`)
 
 type deployResponse struct {
-	ProjectID     string `json:"project_id"`
-	ProjectName   string `json:"project_name,omitempty"`
-	Target        string `json:"target,omitempty"`
-	WorkspaceRoot string `json:"workspace_root,omitempty"`
-	CommitID      string `json:"commit_id,omitempty"`
-	BuildID       string `json:"build_id,omitempty"`
-	VersionSeq    int64  `json:"version_seq,omitempty"`
-	VersionLabel  string `json:"version_label,omitempty"`
-	SourceRef     string `json:"source_ref,omitempty"`
-	BuildStatus   string `json:"build_status,omitempty"`
-	PreviewURL    string `json:"preview_url,omitempty"`
-	ProductionURL string `json:"production_url,omitempty"`
-	Published     bool   `json:"published"`
-	Waited        bool   `json:"waited"`
-	LocalBuild    bool   `json:"local_build"`
-	Resolution    string `json:"resolution,omitempty"`
+	ProjectID     string            `json:"project_id"`
+	ProjectName   string            `json:"project_name,omitempty"`
+	Target        string            `json:"target,omitempty"`
+	WorkspaceRoot string            `json:"workspace_root,omitempty"`
+	CommitID      string            `json:"commit_id,omitempty"`
+	BuildID       string            `json:"build_id,omitempty"`
+	VersionSeq    int64             `json:"version_seq,omitempty"`
+	VersionLabel  string            `json:"version_label,omitempty"`
+	SourceRef     string            `json:"source_ref,omitempty"`
+	BuildStatus   string            `json:"build_status,omitempty"`
+	PreviewURL    string            `json:"preview_url,omitempty"`
+	ProductionURL string            `json:"production_url,omitempty"`
+	AccessMode    string            `json:"access_mode,omitempty"`
+	AccessVersion int               `json:"access_version,omitempty"`
+	AccessCheck   *urlCheckResponse `json:"access_check,omitempty"`
+	Published     bool              `json:"published"`
+	Waited        bool              `json:"waited"`
+	LocalBuild    bool              `json:"local_build"`
+	Resolution    string            `json:"resolution,omitempty"`
+}
+
+type urlCheckResponse struct {
+	URL        string `json:"url,omitempty"`
+	StatusCode int    `json:"status_code,omitempty"`
+	OK         bool   `json:"ok"`
+	Error      string `json:"error,omitempty"`
 }
 
 type deployIntentKind string
@@ -131,6 +143,8 @@ func init() {
 	deployCmd.Flags().StringVar(&workspaceRoot, "workspace-root", "", "Override local RobotX target record root")
 	deployCmd.Flags().StringVar(&versionLabel, "version-label", "", "Optional build version label (e.g. v1.2.3)")
 	deployCmd.Flags().StringVar(&sourceRef, "source-ref", "", "Optional source reference (e.g. tag:v1.2.3, branch:main@<sha>)")
+	deployCmd.Flags().StringVar(&deployAccess, "access", "unchanged", "Access policy after deploy (unchanged|open|login|private)")
+	deployCmd.Flags().BoolVar(&verifyURL, "verify-url", false, "Check whether the production URL is anonymously reachable")
 }
 
 func runDeploy(cmd *cobra.Command, args []string) error {
@@ -162,6 +176,10 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 		return newCLIError("unsupported_feature", "RobotX no longer supports remote build; remove --local-build=false and run the build locally", 1, nil)
 	}
 	if err := validateDeployMode(); err != nil {
+		return err
+	}
+	accessMode, err := normalizeDeployAccess(deployAccess)
+	if err != nil {
 		return err
 	}
 	targetProvided := cmd.Flags().Changed("target")
@@ -343,6 +361,29 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 		productionURL = resolvePublishURL(baseURL, proj)
 	}
 
+	accessVersion := 0
+	if accessMode != "unchanged" && build != nil && build.Status == "success" {
+		input, err := accessPolicyInputForMode(accessMode)
+		if err != nil {
+			return err
+		}
+		logf("🔐 Updating access policy to %s...\n", accessMode)
+		version, err := c.UpdateAccessPolicy(proj.ProjectID, input)
+		if err != nil {
+			return newCLIError("access_policy_failed", "failed to update access policy", 2, err)
+		}
+		if version != nil {
+			accessVersion = version.Version
+		}
+		logf("✅ Access policy updated: %s\n", accessModeLabel(accessMode))
+	}
+
+	var accessCheck *urlCheckResponse
+	if verifyURL {
+		accessCheck = verifyProductionURL(c, productionURL)
+		logURLCheck(accessCheck)
+	}
+
 	if intent.WriteTarget {
 		if err := writeDeployTargetRecord(intent, proj, absPath, artifactDir, productionURL); err != nil {
 			return newCLIError("target_write_failed", "failed to write RobotX target record", 1, err)
@@ -362,6 +403,9 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 		BuildStatus:   safeBuildStatus(build),
 		PreviewURL:    previewURL,
 		ProductionURL: productionURL,
+		AccessMode:    accessMode,
+		AccessVersion: accessVersion,
+		AccessCheck:   accessCheck,
 		Published:     publish && productionURL != "",
 		Waited:        wait,
 		LocalBuild:    localBuild,
@@ -371,6 +415,57 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+func normalizeDeployAccess(value string) (string, error) {
+	mode := strings.ToLower(strings.TrimSpace(value))
+	if mode == "" {
+		mode = "unchanged"
+	}
+	switch mode {
+	case "unchanged", "open", "login", "private":
+		return mode, nil
+	default:
+		return "", newCLIError("invalid_access_mode", "invalid --access value (expected unchanged, open, login, or private)", 1, nil)
+	}
+}
+
+func verifyProductionURL(c *client.Client, productionURL string) *urlCheckResponse {
+	productionURL = strings.TrimSpace(productionURL)
+	if productionURL == "" {
+		return &urlCheckResponse{
+			OK:    false,
+			Error: "production URL is unavailable",
+		}
+	}
+	check, err := c.CheckURL(productionURL)
+	if err != nil {
+		return &urlCheckResponse{
+			URL:   productionURL,
+			OK:    false,
+			Error: err.Error(),
+		}
+	}
+	return &urlCheckResponse{
+		URL:        check.URL,
+		StatusCode: check.StatusCode,
+		OK:         check.OK,
+	}
+}
+
+func logURLCheck(check *urlCheckResponse) {
+	if check == nil {
+		return
+	}
+	if check.OK {
+		logf("✅ Production URL is anonymously reachable (HTTP %d)\n", check.StatusCode)
+		return
+	}
+	if check.StatusCode > 0 {
+		logf("⚠️  Production URL is not anonymously reachable (HTTP %d)\n", check.StatusCode)
+		return
+	}
+	logf("⚠️  Production URL check did not complete: %s\n", valueOrDash(check.Error))
 }
 
 func validateDeployMode() error {
