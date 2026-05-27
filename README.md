@@ -44,7 +44,7 @@ curl -fsSL https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts
 
 ```bash
 curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh \
-  | env ROBOTX_VERSION=v0.3 \
+  | env ROBOTX_VERSION=v0.4 \
       ROBOTX_GITHUB_PROXY=https://mr.robotx.xin \
       bash
 ```
@@ -53,7 +53,7 @@ curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/r
 
 ```bash
 curl -fsSL https://your-mirror.example.com/haibingtown/robotx_cli/main/scripts/install.sh \
-  | env ROBOTX_VERSION=v0.3 \
+  | env ROBOTX_VERSION=v0.4 \
       ROBOTX_DOWNLOAD_BASE_URL=https://your-mirror.example.com/haibingtown/robotx_cli/releases/download \
       bash
 ```

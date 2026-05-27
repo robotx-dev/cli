@@ -108,14 +108,14 @@ curl -fsSL https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts
 
 ```bash
 curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh \
-  | env ROBOTX_VERSION=v0.3 ROBOTX_GITHUB_PROXY=https://mr.robotx.xin bash
+  | env ROBOTX_VERSION=v0.4 ROBOTX_GITHUB_PROXY=https://mr.robotx.xin bash
 ```
 
 如果有内部 release 镜像：
 
 ```bash
 curl -fsSL https://<mirror>/haibingtown/robotx_cli/main/scripts/install.sh \
-  | env ROBOTX_VERSION=v0.3 \
+  | env ROBOTX_VERSION=v0.4 \
       ROBOTX_DOWNLOAD_BASE_URL=https://<mirror>/haibingtown/robotx_cli/releases/download \
       bash
 ```

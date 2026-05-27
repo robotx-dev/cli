@@ -15,7 +15,7 @@ Use this skill when an agent needs to deploy or manage project versions on Robot
 - Install (binary-first, no Go required):
   - `curl -fsSL https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh | bash`
   - In mainland China or slow GitHub networks, prefer the default RobotX mirror relay with a pinned version:
-    - `curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh | env ROBOTX_VERSION=v0.3 ROBOTX_GITHUB_PROXY=https://mr.robotx.xin bash`
+    - `curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh | env ROBOTX_VERSION=v0.4 ROBOTX_GITHUB_PROXY=https://mr.robotx.xin bash`
 - Fallback install (if you explicitly want source install):
   - `go install github.com/haibingtown/robotx_cli/cmd/robotx@latest`
   - Or auto PATH setup: `curl -fsSL https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/go-install.sh | bash`
