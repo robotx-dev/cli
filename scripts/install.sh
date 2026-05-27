@@ -7,7 +7,22 @@ INSTALL_DIR="${ROBOTX_INSTALL_DIR:-${HOME}/.local/bin}"
 AUTO_PATH="${ROBOTX_AUTO_PATH:-1}"
 CURL_CONNECT_TIMEOUT="${ROBOTX_CONNECT_TIMEOUT:-10}"
 CURL_MAX_TIME="${ROBOTX_MAX_TIME:-300}"
-CURL_ARGS=(-fsSL --connect-timeout "${CURL_CONNECT_TIMEOUT}" --max-time "${CURL_MAX_TIME}")
+DOWNLOAD_RETRIES="${ROBOTX_DOWNLOAD_RETRIES:-3}"
+RETRY_DELAY="${ROBOTX_RETRY_DELAY:-2}"
+GITHUB_API_BASE="${ROBOTX_GITHUB_API_BASE:-https://api.github.com}"
+DOWNLOAD_BASE_URL="${ROBOTX_DOWNLOAD_BASE_URL:-}"
+GITHUB_PROXY="${ROBOTX_GITHUB_PROXY:-}"
+DEFAULT_CURL_PROGRESS="1"
+if [[ "${CI:-}" == "true" ]]; then
+  DEFAULT_CURL_PROGRESS="0"
+fi
+CURL_PROGRESS="${ROBOTX_CURL_PROGRESS:-${DEFAULT_CURL_PROGRESS}}"
+CURL_FETCH_ARGS=(-fsSL --connect-timeout "${CURL_CONNECT_TIMEOUT}" --max-time "${CURL_MAX_TIME}")
+if [[ "${CURL_PROGRESS}" == "1" ]]; then
+  CURL_DOWNLOAD_ARGS=(-fL --progress-bar --show-error --connect-timeout "${CURL_CONNECT_TIMEOUT}" --max-time "${CURL_MAX_TIME}")
+else
+  CURL_DOWNLOAD_ARGS=("${CURL_FETCH_ARGS[@]}")
+fi
 
 if ! command -v curl >/dev/null 2>&1; then
   echo "curl is required" >&2
@@ -40,12 +55,60 @@ case "${ARCH_RAW}" in
     ;;
 esac
 
+proxied_url() {
+  local url="$1"
+  if [[ -n "${GITHUB_PROXY}" ]]; then
+    echo "${GITHUB_PROXY%/}/${url}"
+  else
+    echo "${url}"
+  fi
+}
+
+fetch_url() {
+  local label="$1"
+  local url="$2"
+  local attempt=1
+
+  while true; do
+    if curl "${CURL_FETCH_ARGS[@]}" "${url}"; then
+      return 0
+    fi
+    if (( attempt >= DOWNLOAD_RETRIES )); then
+      echo "failed to fetch ${label} after ${attempt} attempt(s): ${url}" >&2
+      return 1
+    fi
+    echo "failed to fetch ${label}; retrying in ${RETRY_DELAY}s (${attempt}/${DOWNLOAD_RETRIES})..." >&2
+    sleep "${RETRY_DELAY}"
+    attempt=$((attempt + 1))
+  done
+}
+
+download_file() {
+  local label="$1"
+  local url="$2"
+  local output="$3"
+  local attempt=1
+
+  while true; do
+    if curl "${CURL_DOWNLOAD_ARGS[@]}" "${url}" -o "${output}"; then
+      return 0
+    fi
+    if (( attempt >= DOWNLOAD_RETRIES )); then
+      echo "failed to download ${label} after ${attempt} attempt(s): ${url}" >&2
+      return 1
+    fi
+    echo "failed to download ${label}; retrying in ${RETRY_DELAY}s (${attempt}/${DOWNLOAD_RETRIES})..." >&2
+    sleep "${RETRY_DELAY}"
+    attempt=$((attempt + 1))
+  done
+}
+
 resolve_tag() {
   if [[ "${REQUESTED_VERSION}" == "latest" ]]; then
     local tag
     echo "Resolving latest release tag from ${REPO}..." >&2
     tag="$(
-      curl "${CURL_ARGS[@]}" "https://api.github.com/repos/${REPO}/releases/latest" \
+      fetch_url "latest release metadata" "${GITHUB_API_BASE%/}/repos/${REPO}/releases/latest" \
         | sed -nE 's/^[[:space:]]*"tag_name":[[:space:]]*"([^"]+)".*/\1/p' \
         | tail -n1
     )"
@@ -68,7 +131,11 @@ TAG="$(resolve_tag)"
 VERSION="${TAG#v}"
 ARCHIVE_NAME="robotx_${VERSION}_${OS}_${ARCH}.tar.gz"
 CHECKSUMS_NAME="checksums.txt"
-BASE_URL="https://github.com/${REPO}/releases/download/${TAG}"
+if [[ -n "${DOWNLOAD_BASE_URL}" ]]; then
+  BASE_URL="${DOWNLOAD_BASE_URL%/}/${TAG}"
+else
+  BASE_URL="$(proxied_url "https://github.com/${REPO}/releases/download/${TAG}")"
+fi
 ARCHIVE_URL="${BASE_URL}/${ARCHIVE_NAME}"
 CHECKSUMS_URL="${BASE_URL}/${CHECKSUMS_NAME}"
 
@@ -79,9 +146,9 @@ cleanup() {
 trap cleanup EXIT
 
 echo "Downloading ${ARCHIVE_NAME} from ${TAG}..."
-curl "${CURL_ARGS[@]}" "${ARCHIVE_URL}" -o "${TMP_DIR}/${ARCHIVE_NAME}"
+download_file "${ARCHIVE_NAME}" "${ARCHIVE_URL}" "${TMP_DIR}/${ARCHIVE_NAME}"
 echo "Downloading ${CHECKSUMS_NAME} from ${TAG}..."
-curl "${CURL_ARGS[@]}" "${CHECKSUMS_URL}" -o "${TMP_DIR}/${CHECKSUMS_NAME}"
+download_file "${CHECKSUMS_NAME}" "${CHECKSUMS_URL}" "${TMP_DIR}/${CHECKSUMS_NAME}"
 
 EXPECTED_SUM="$(awk -v file="${ARCHIVE_NAME}" '$2 == file {print $1}' "${TMP_DIR}/${CHECKSUMS_NAME}")"
 if [[ -z "${EXPECTED_SUM}" ]]; then

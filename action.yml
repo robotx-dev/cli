@@ -77,6 +77,18 @@ inputs:
     description: "Repository owner/name hosting release artifacts"
     required: false
     default: "haibingtown/robotx_cli"
+  download-base-url:
+    description: "Optional release asset mirror base URL, ending before the release tag"
+    required: false
+    default: ""
+  github-proxy:
+    description: "Optional GitHub URL proxy prefix for release asset downloads"
+    required: false
+    default: ""
+  github-api-base:
+    description: "Optional GitHub API base URL for resolving latest releases"
+    required: false
+    default: ""
   extra-args:
     description: "Additional CLI args appended after built-in flags"
     required: false
@@ -132,6 +144,9 @@ runs:
           ROBOTX_VERSION="$1" \
           ROBOTX_INSTALL_DIR="${INSTALL_DIR}" \
           ROBOTX_REPO="${{ inputs.repo }}" \
+          ROBOTX_DOWNLOAD_BASE_URL="${{ inputs.download-base-url }}" \
+          ROBOTX_GITHUB_PROXY="${{ inputs.github-proxy }}" \
+          ROBOTX_GITHUB_API_BASE="${{ inputs.github-api-base }}" \
           ROBOTX_AUTO_PATH="0" \
             bash "${GITHUB_ACTION_PATH}/scripts/install.sh"
         }

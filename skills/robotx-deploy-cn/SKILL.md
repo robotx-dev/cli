@@ -104,6 +104,22 @@ robotx --help
 curl -fsSL https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh | bash
 ```
 
+大陆网络或 GitHub 下载慢时，不要反复等待 `latest`。默认使用 `mr.robotx.xin` 中转并固定版本：
+
+```bash
+curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh \
+  | env ROBOTX_VERSION=v0.3 ROBOTX_GITHUB_PROXY=https://mr.robotx.xin bash
+```
+
+如果有内部 release 镜像：
+
+```bash
+curl -fsSL https://<mirror>/haibingtown/robotx_cli/main/scripts/install.sh \
+  | env ROBOTX_VERSION=v0.3 \
+      ROBOTX_DOWNLOAD_BASE_URL=https://<mirror>/haibingtown/robotx_cli/releases/download \
+      bash
+```
+
 只有明确需要源码安装时，才使用：
 
 ```bash

@@ -7,6 +7,14 @@ curl -fsSL https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts
 robotx --version
 ```
 
+大陆网络或 GitHub release 下载很慢时，默认推荐使用 `mr.robotx.xin` 中转，并固定版本避免卡在 `latest` 解析：
+
+```bash
+curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh \
+  | env ROBOTX_VERSION=v0.3 ROBOTX_GITHUB_PROXY=https://mr.robotx.xin bash
+robotx --version
+```
+
 或使用 Go（自动写入 PATH）：
 
 ```bash

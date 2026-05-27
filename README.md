@@ -33,6 +33,30 @@ curl -fsSL https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts
 - `ROBOTX_AUTO_PATH=1`（默认，自动写入 shell profile）或 `0`
 - `ROBOTX_CONNECT_TIMEOUT=10`（默认连接超时秒数）
 - `ROBOTX_MAX_TIME=300`（默认单次下载最长秒数）
+- `ROBOTX_DOWNLOAD_RETRIES=3`（默认下载重试次数）
+- `ROBOTX_RETRY_DELAY=2`（默认重试间隔秒数）
+- `ROBOTX_CURL_PROGRESS=1`（本地默认显示下载进度；CI 默认关闭）
+- `ROBOTX_GITHUB_API_BASE=https://api.github.com`（解析 latest 使用）
+- `ROBOTX_GITHUB_PROXY=https://your-proxy.example.com`（给 GitHub release URL 加代理前缀）
+- `ROBOTX_DOWNLOAD_BASE_URL=https://your-mirror.example.com/haibingtown/robotx_cli/releases/download`（直接使用 release 资产镜像）
+
+大陆网络默认推荐使用 `mr.robotx.xin` 中转，并固定版本跳过 GitHub API：
+
+```bash
+curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh \
+  | env ROBOTX_VERSION=v0.3 \
+      ROBOTX_GITHUB_PROXY=https://mr.robotx.xin \
+      bash
+```
+
+如果你有内部 release 镜像，优先使用镜像源：
+
+```bash
+curl -fsSL https://your-mirror.example.com/haibingtown/robotx_cli/main/scripts/install.sh \
+  | env ROBOTX_VERSION=v0.3 \
+      ROBOTX_DOWNLOAD_BASE_URL=https://your-mirror.example.com/haibingtown/robotx_cli/releases/download \
+      bash
+```
 
 ### 方式 2: 从源码安装
 
