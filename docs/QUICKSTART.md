@@ -11,7 +11,7 @@ robotx --version
 
 ```bash
 curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/install.sh \
-  | env ROBOTX_VERSION=v0.5 ROBOTX_GITHUB_PROXY=https://mr.robotx.xin bash
+  | env ROBOTX_VERSION=v0.6 ROBOTX_GITHUB_PROXY=https://mr.robotx.xin bash
 robotx --version
 ```
 
@@ -19,7 +19,7 @@ robotx --version
 
 ```bash
 curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/install.sh \
-  | env ROBOTX_VERSION=v0.5 ROBOTX_GITHUB_PROXY=https://gh-proxy.com bash
+  | env ROBOTX_VERSION=v0.6 ROBOTX_GITHUB_PROXY=https://gh-proxy.com bash
 robotx --version
 ```
 

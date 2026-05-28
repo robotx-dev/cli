@@ -100,7 +100,7 @@ else:
 仓库内置 `action.yml`，可直接使用：
 
 ```yaml
-- uses: robotx-dev/cli@v0.5
+- uses: robotx-dev/cli@v0.6
   with:
     base-url: ${{ secrets.ROBOTX_BASE_URL }}
     api-key: ${{ secrets.ROBOTX_API_KEY }}

@@ -44,7 +44,7 @@ curl -fsSL https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/install
 
 ```bash
 curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/install.sh \
-  | env ROBOTX_VERSION=v0.5 \
+  | env ROBOTX_VERSION=v0.6 \
       ROBOTX_GITHUB_PROXY=https://mr.robotx.xin \
       bash
 ```
@@ -53,7 +53,7 @@ curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/robotx-dev/cl
 
 ```bash
 curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/install.sh \
-  | env ROBOTX_VERSION=v0.5 \
+  | env ROBOTX_VERSION=v0.6 \
       ROBOTX_GITHUB_PROXY=https://gh-proxy.com \
       bash
 ```
@@ -62,7 +62,7 @@ curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/robotx-dev/cl
 
 ```bash
 curl -fsSL https://your-mirror.example.com/robotx-dev/cli/main/scripts/install.sh \
-  | env ROBOTX_VERSION=v0.5 \
+  | env ROBOTX_VERSION=v0.6 \
       ROBOTX_DOWNLOAD_BASE_URL=https://your-mirror.example.com/robotx-dev/cli/releases/download \
       bash
 ```
