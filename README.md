@@ -49,6 +49,15 @@ curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/r
       bash
 ```
 
+如果 `mr.robotx.xin` 拉 GitHub release 包时返回 502 或下载超时，可以保留 `mr.robotx.xin` 获取安装脚本，并把 release 下载代理切到备用线路 `gh-proxy.com`：
+
+```bash
+curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh \
+  | env ROBOTX_VERSION=v0.4 \
+      ROBOTX_GITHUB_PROXY=https://gh-proxy.com \
+      bash
+```
+
 如果你有内部 release 镜像，优先使用镜像源：
 
 ```bash

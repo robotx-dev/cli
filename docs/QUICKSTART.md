@@ -15,6 +15,14 @@ curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/r
 robotx --version
 ```
 
+如果 `mr.robotx.xin` 下载 GitHub release 包时返回 502 或超时，使用备用线路下载 release 包：
+
+```bash
+curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh \
+  | env ROBOTX_VERSION=v0.4 ROBOTX_GITHUB_PROXY=https://gh-proxy.com bash
+robotx --version
+```
+
 或使用 Go（自动写入 PATH）：
 
 ```bash
