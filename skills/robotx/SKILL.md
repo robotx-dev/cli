@@ -15,9 +15,9 @@ Use this skill when an agent needs to deploy or manage project versions on Robot
 - Install (binary-first, no Go required):
   - `curl -fsSL https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh | bash`
   - In mainland China or slow GitHub networks, prefer the default RobotX mirror relay with a pinned version:
-    - `curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh | env ROBOTX_VERSION=v0.4 ROBOTX_GITHUB_PROXY=https://mr.robotx.xin bash`
+    - `curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh | env ROBOTX_VERSION=v0.5 ROBOTX_GITHUB_PROXY=https://mr.robotx.xin bash`
   - If the default relay returns 502 or times out while downloading GitHub release assets, use the fallback release proxy:
-    - `curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh | env ROBOTX_VERSION=v0.4 ROBOTX_GITHUB_PROXY=https://gh-proxy.com bash`
+    - `curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh | env ROBOTX_VERSION=v0.5 ROBOTX_GITHUB_PROXY=https://gh-proxy.com bash`
 - Fallback install (if you explicitly want source install):
   - `go install github.com/haibingtown/robotx_cli/cmd/robotx@latest`
   - Or auto PATH setup: `curl -fsSL https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/go-install.sh | bash`
@@ -31,7 +31,7 @@ Set credentials by config file (`~/.robotx.yaml`) or env vars:
 
 ## Auth pre-check and default login
 
-Before running any API command (`deploy`, `access`, `projects`, `versions`, `status`, `publish`),
+Before running any API command (`deploy`, `access`, `projects`, `projects delete`, `versions`, `status`, `publish`),
 verify local auth first.
 
 Recommended quick check:
@@ -70,6 +70,7 @@ For agents and workflows, always use structured output:
 - `robotx status --project-id proj_123 --output json`
 - `robotx publish --project-id proj_123 --build-id build_456 --output json`
 - `robotx access status --project-id proj_123 --output json`
+- `robotx projects delete --project-id proj_123 --yes --output json`
 
 JSON is written to stdout. Progress logs are written to stderr.
 
@@ -101,7 +102,10 @@ robotx versions --project-id proj_123 [--limit 20]
 
 ```bash
 robotx projects [--limit 50]
+robotx projects delete --project-id proj_123 --yes
 ```
+
+`projects delete` deletes the remote RobotX project and requires explicit user approval before running. It does not remove local `.robotx/targets.json` records; use `robotx targets remove <name>` for local target records.
 
 ### Access
 

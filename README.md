@@ -1,6 +1,6 @@
 # RobotX CLI
 
-RobotX CLI 用于将应用部署到 RobotX 平台，支持 `login` / `deploy` / `access` / `doctor` / `projects` / `versions` / `status` / `publish`。
+RobotX CLI 用于将应用部署到 RobotX 平台，支持 `login` / `deploy` / `access` / `doctor` / `projects` / `projects delete` / `versions` / `status` / `publish`。
 
 ## 当前状态
 
@@ -44,7 +44,7 @@ curl -fsSL https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts
 
 ```bash
 curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh \
-  | env ROBOTX_VERSION=v0.4 \
+  | env ROBOTX_VERSION=v0.5 \
       ROBOTX_GITHUB_PROXY=https://mr.robotx.xin \
       bash
 ```
@@ -53,7 +53,7 @@ curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/r
 
 ```bash
 curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh \
-  | env ROBOTX_VERSION=v0.4 \
+  | env ROBOTX_VERSION=v0.5 \
       ROBOTX_GITHUB_PROXY=https://gh-proxy.com \
       bash
 ```
@@ -62,7 +62,7 @@ curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/r
 
 ```bash
 curl -fsSL https://your-mirror.example.com/haibingtown/robotx_cli/main/scripts/install.sh \
-  | env ROBOTX_VERSION=v0.4 \
+  | env ROBOTX_VERSION=v0.5 \
       ROBOTX_DOWNLOAD_BASE_URL=https://your-mirror.example.com/haibingtown/robotx_cli/releases/download \
       bash
 ```
@@ -204,6 +204,19 @@ robotx login --base-url https://robotx.xin
 ```bash
 robotx projects [--limit 50]
 ```
+
+删除远端 RobotX 项目：
+
+```bash
+robotx projects delete proj_123 --yes
+# 或
+robotx projects delete --project-id proj_123 --yes
+```
+
+说明：
+
+- 删除远端项目是破坏性操作，必须显式传 `--yes`
+- `projects delete` 不会删除本地 `.robotx/targets.json` 里的网站记录；如需移除本地记录，使用 `robotx targets remove <记录名>`
 
 ### access
 

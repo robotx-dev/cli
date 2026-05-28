@@ -7,6 +7,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -62,6 +63,7 @@ type Project struct {
 	RuntimeRefs *ProjectRuntimeRefs `json:"runtime_refs,omitempty"`
 	CreatedAt   time.Time           `json:"created_at"`
 	UpdatedAt   time.Time           `json:"updated_at"`
+	DeletedAt   *time.Time          `json:"deleted_at,omitempty"`
 }
 
 type AccessPolicy struct {
@@ -214,6 +216,25 @@ func (c *Client) GetProject(projectID string) (*Project, error) {
 	}
 
 	return &project, nil
+}
+
+// DeleteProject deletes a RobotX project.
+func (c *Client) DeleteProject(projectID string) error {
+	projectID = strings.TrimSpace(projectID)
+	if projectID == "" {
+		return fmt.Errorf("project ID is required")
+	}
+
+	resp, err := c.doRequest(http.MethodDelete, fmt.Sprintf("/api/projects/%s", url.PathEscape(projectID)), nil)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK {
+		return c.parseError(resp)
+	}
+	return nil
 }
 
 // ListProjects lists projects for current account.

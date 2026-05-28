@@ -62,6 +62,23 @@ func TestListProjectsEnforcesClientSideLimit(t *testing.T) {
 	}
 }
 
+func TestDeleteProjectSendsDeleteRequest(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete || r.URL.Path != "/api/projects/proj-1" {
+			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+		}
+		if got := r.Header.Get("Authorization"); got != "Bearer test-key" {
+			t.Fatalf("authorization header = %q", got)
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	if err := NewClient(server.URL, "test-key").DeleteProject("proj-1"); err != nil {
+		t.Fatalf("delete project: %v", err)
+	}
+}
+
 func TestUpdateAccessPolicySendsOpenPolicy(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPut || r.URL.Path != "/api/projects/proj-1/access-policy" {

@@ -39,6 +39,7 @@ robotx projects --limit 50 --output json
 robotx versions --project-id proj_123 --output json
 robotx status --project-id proj_123 --output json
 robotx publish --project-id proj_123 --build-id build_456 --output json
+robotx projects delete --project-id proj_123 --yes --output json
 ```
 
 说明：
@@ -122,6 +123,7 @@ Action 输出：
 
 - `status`：`--project-id` 与 `--build-id` 至少提供一个
 - `versions`：必须带 `--project-id`
+- `projects delete`：删除远端项目，必须先获得用户明确确认，并传 `--yes`
 - `status --logs` 与 `logs`：不再支持，因为 RobotX 不再提供远程 build 日志
 
 ## MCP 说明
