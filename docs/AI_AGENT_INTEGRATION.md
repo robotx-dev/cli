@@ -15,8 +15,9 @@
 
 1. 使用 release 二进制安装（不要依赖本地 Go）
 2. 使用 `--output json` 获取稳定契约
-3. 通过 shell skill / GitHub Action 调用 CLI
-4. 暂不使用 MCP（当前未实现）
+3. 用 `robotx doctor --output json` 做凭证和连通性预检
+4. 通过 shell skill / GitHub Action 调用 CLI
+5. 暂不使用 MCP（当前未实现）
 
 ## 1) 安装 CLI（二进制）
 
@@ -24,17 +25,38 @@
 curl -fsSL https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/install.sh | bash
 ```
 
-## 2) 传入凭证
+大陆网络或 GitHub 下载慢时：
 
 ```bash
-export ROBOTX_BASE_URL=https://api.robotx.xin
+curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/install.sh \
+  | env ROBOTX_VERSION=v0.6 ROBOTX_GITHUB_PROXY=https://mr.robotx.xin bash
+```
+
+## 2) 登录或传入凭证
+
+交互式环境优先使用登录：
+
+```bash
+robotx login --base-url https://robotx.xin
+robotx doctor --output json
+```
+
+CI 和非交互环境使用环境变量：
+
+```bash
+export ROBOTX_BASE_URL=https://robotx.xin
 export ROBOTX_API_KEY=your-api-key
 ```
 
 ## 3) 用 JSON 模式调用
 
 ```bash
-robotx deploy . --name my-app --output json
+robotx deploy . --create --target main --name my-app --output json
+robotx deploy . --update --target main --output json
+robotx targets --output json
+robotx targets remove main --output json
+robotx access status --project-id proj_123 --output json
+robotx access open --project-id proj_123 --output json
 robotx projects --limit 50 --output json
 robotx versions --project-id proj_123 --output json
 robotx status --project-id proj_123 --output json
@@ -81,6 +103,8 @@ import subprocess
 
 cmd = [
     "robotx", "deploy", ".",
+    "--create",
+    "--target", "main",
     "--name", "my-app",
     "--output", "json",
 ]
@@ -106,9 +130,15 @@ else:
     api-key: ${{ secrets.ROBOTX_API_KEY }}
     project-path: .
     project-name: my-app
+    access: open
+    verify-url: "true"
     # 可选：使用 action 源码构建 CLI（而非 release 二进制）
     # version: source
+    # 推荐：CI 固定更新已有项目时，透传 project id
+    # extra-args: --project-id ${{ secrets.ROBOTX_PROJECT_ID }}
 ```
+
+如果 CI 需要按项目名复用已有项目，可显式使用 `extra-args: --upsert`。不要依赖临时 checkout 里的 `.robotx/targets.json` 持久化目标记录。
 
 Action 输出：
 
@@ -117,10 +147,15 @@ Action 输出：
 - `status`
 - `preview_url`
 - `production_url`
+- `version_label`
+- `version_seq`
+- `source_ref`
 - `raw_json`
 
 ## 6) 命令约束
 
+- `deploy`：新建项目建议用 `--create --target <name> --name <project>`；更新已有目标建议用 `--update --target <name>`
+- `targets remove`：只删除本地 `.robotx/targets.json` 记录，不删除远端项目
 - `status`：`--project-id` 与 `--build-id` 至少提供一个
 - `versions`：必须带 `--project-id`
 - `projects delete`：删除远端项目，必须先获得用户明确确认，并传 `--yes`

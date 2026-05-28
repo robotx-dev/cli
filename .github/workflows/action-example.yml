@@ -10,6 +10,10 @@ on:
       project_name:
         description: "Project name"
         required: true
+      extra_args:
+        description: "Extra robotx deploy args, e.g. --project-id proj_123 or --upsert"
+        required: false
+        default: ""
 
 jobs:
   deploy:
@@ -26,6 +30,7 @@ jobs:
           api-key: ${{ secrets.ROBOTX_API_KEY }}
           project-path: ${{ github.event.inputs.project_path }}
           project-name: ${{ github.event.inputs.project_name }}
+          extra-args: ${{ github.event.inputs.extra_args }}
 
       - name: Print result
         shell: bash

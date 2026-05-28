@@ -83,7 +83,7 @@ metadata:
 ### 1. 检查 CLI
 
 ```bash
-which robotx || which robotx_cli
+command -v robotx
 ```
 
 同时检查当前安装版本和命令能力：
@@ -98,7 +98,7 @@ robotx doctor --help
 robotx --help
 ```
 
-如果本机安装的 CLI 和项目源码说明不一致，优先相信当前命令的实际 `--help` 输出和本地源码，不要凭旧记忆猜参数。当前 CLI 可能没有 `domain`、`access`、`verify-url` 之类命令；没有命令时不要承诺能直接绑定自有域名或修改访问策略。
+如果本机安装的 CLI 和项目源码说明不一致，优先相信当前命令的实际 `--help` 输出和本地源码，不要凭旧记忆猜参数。当前 CLI 支持 `access` 和 `verify-url`；自有域名绑定暂未作为 CLI 能力暴露，不要承诺能直接绑定自有域名。
 
 如果缺失，优先安装 release 二进制：
 
@@ -374,7 +374,7 @@ robotx status --project-id proj_123 --build-id build_456 --output json
 把“发布成功”和“访问成功”分开判断：
 
 - 发布成功：以 `robotx deploy --output json` 和 `robotx status --output json` 为准。
-- 匿名访问成功：优先用 `robotx deploy --access open --verify-url --output json` 的 `access_check` 判断；旧 CLI 才用浏览器或 `curl` 检查链接能否未登录打开。
+- 匿名访问成功：优先用 `robotx deploy --access open --verify-url --output json` 的 `access_check` 判断；必要时再用浏览器或 `curl` 检查链接能否未登录打开。
 - 如果 `status` 是 success，但 `production_url` 或 `preview_url` 返回 401/403，这不是部署失败，而是 RobotX 应用访问层需要登录、成员权限、邀请码或签名链接。
 - 如果用户要求未登录可访问，发布成功后 401/403 的下一步是 `robotx access open --project-id ... --output json`，不是重新部署。
 - 预览链接通常更偏向登录态验证；预览 401 时不要重部署，先说明访问策略。

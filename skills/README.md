@@ -6,7 +6,7 @@ This repository keeps reusable RobotX-related skills under `skills/`.
 
 - `skills/robotx/SKILL.md`
   - Core deployment and operations skill for the `robotx` CLI.
-  - Use when an agent needs to deploy, publish, inspect versions, or fetch logs on RobotX.
+  - Use when an agent needs to deploy, publish, inspect versions, manage access, or delete RobotX projects.
 
 - `skills/robotx-deploy-cn/SKILL.md`
   - 面向低技术用户的 RobotX 中文发布技能。

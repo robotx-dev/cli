@@ -1,11 +1,14 @@
 # RobotX CLI
 
-RobotX CLI 用于将应用部署到 RobotX 平台，支持 `login` / `deploy` / `access` / `doctor` / `projects` / `projects delete` / `versions` / `status` / `publish`。
+RobotX CLI 用于将应用部署到 RobotX 平台，支持 `login` / `deploy` / `targets` / `access` / `doctor` / `projects` / `projects delete` / `versions` / `status` / `publish`。`logs` 是历史兼容命令，`mcp` 当前为占位命令。
 
 ## 当前状态
 
 - CLI 集成（shell/CI/Agent）: 可用
 - JSON 机器输出: 可用（`--output json` 或 `--json`）
+- 本地目标记录（`robotx targets` / `robotx targets remove`）: 可用
+- 远程项目删除（`robotx projects delete`）: 可用，必须显式 `--yes`
+- 远程构建日志（`status --logs` / `robotx logs`）: 不可用（RobotX 现在本地构建）
 - MCP 模式（`robotx mcp`）: 未实现（占位）
 
 ## 文档导航
@@ -15,7 +18,7 @@ RobotX CLI 用于将应用部署到 RobotX 平台，支持 `login` / `deploy` / 
 - 示例集合: [docs/EXAMPLES.md](docs/EXAMPLES.md)
 - Agent 集成: [docs/AI_AGENT_INTEGRATION.md](docs/AI_AGENT_INTEGRATION.md)
 - Skills 总览: [skills/README.md](skills/README.md)
-- 项目文档归档: `docs/`
+- 项目文档: `docs/`
 
 ## 安装
 
@@ -154,6 +157,7 @@ robotx login --base-url https://robotx.xin
 ```bash
 robotx deploy [project-path] \
   [--name my-app] \
+  [--target main] [--project-id proj_123] [--create|--update|--upsert] \
   [--version-label v1.2.3] [--source-ref "tag:v1.2.3@<sha>"] \
   [--publish=true] [--local-build=true] [--wait=true] [--timeout 600] \
   [--access unchanged|open|login|private] [--verify-url]
@@ -165,6 +169,11 @@ robotx deploy [project-path] \
 
 - `--local-build=true`：本地构建并上传产物
 - `--publish=true`：构建成功后自动发布
+- `--target`：使用 `.robotx/targets.json` 中的本地目标记录
+- `--project-id`：显式更新指定远端项目
+- `--create`：强制创建新项目；同名项目存在时失败
+- `--update`：更新已有目标或指定项目
+- `--upsert`：旧版按项目名创建或复用行为；只有明确需要时再用
 - `--version-label`：显式指定部署版本号（不传则服务端按数字递增）
 - `--source-ref`：记录来源标识（建议在 CI 中传 `tag/branch + commit`）
 - `--access`：部署成功后更新访问策略；默认 `unchanged`
@@ -218,6 +227,21 @@ robotx projects delete --project-id proj_123 --yes
 - 删除远端项目是破坏性操作，必须显式传 `--yes`
 - `projects delete` 不会删除本地 `.robotx/targets.json` 里的网站记录；如需移除本地记录，使用 `robotx targets remove <记录名>`
 
+### targets
+
+查看或清理当前工作区的本地部署目标记录：
+
+```bash
+robotx targets
+robotx targets remove main
+```
+
+说明：
+
+- `targets` 只读写本地 `.robotx/targets.json`
+- `targets remove` 不会删除远端 RobotX 项目；删除远端项目请使用 `robotx projects delete`
+- 多个站点或多次部署时，优先用 `--target <记录名>` 明确更新哪个目标
+
 ### access
 
 查看或修改项目访问策略：
@@ -263,6 +287,14 @@ robotx status [--project-id proj_123] [--build-id build_456]
 - `--project-id` 与 `--build-id` 至少提供一个
 - `status --logs` 和 `robotx logs` 已不再可用，因为 RobotX 不再提供远程 build 日志
 
+### logs
+
+```bash
+robotx logs [build-id]
+```
+
+历史兼容命令。当前会返回“不支持远程构建日志”的错误；排障请使用本地构建输出和 `robotx status`。
+
 ### publish
 
 发布构建到生产环境：
@@ -286,7 +318,7 @@ robotx mcp
 1. 下载 release 二进制
 2. 校验 checksum
 3. 执行 `robotx deploy --publish=true --output json`
-4. 输出 `project_id/build_id/status/url/version_label/version_seq/source_ref` 等字段
+4. 输出 `project_id/build_id/status/preview_url/production_url/version_label/version_seq/source_ref` 等字段
 
 示例工作流见：`.github/workflows/action-example.yml`。
 
@@ -296,6 +328,7 @@ robotx mcp
 - 支持输入别名：`version_label`/`source_ref`（等价于 `version-label`/`source-ref`）
 - 未显式传 `source-ref` 时，action 会默认使用 `GITHUB_REF` + `GITHUB_SHA` 生成来源标识
 - 支持 `access: open|login|private|unchanged` 和 `verify-url: true`
+- CI 固定更新已有项目时，建议通过 `extra-args: --project-id <id>` 指定项目；需要按名称复用时显式传 `extra-args: --upsert`
 - `version: source` 可在 CI 中直接从 action 源码构建 CLI（适合验证 `@main` 最新变更）
 
 ## Release

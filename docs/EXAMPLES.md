@@ -1,556 +1,144 @@
-# RobotX Deployment Skill - Integration Examples
+# RobotX CLI Examples
 
-This document provides practical examples of how AI agents can integrate with RobotX deployment capabilities.
+这些示例只覆盖当前支持的能力。Agent、CI 和脚本集成应优先使用 `--output json`，不要解析面向人的文本输出。
 
-## Table of Contents
-
-1. [Quick Start](#quick-start)
-2. [Claude Code Integration](#claude-code-integration)
-3. [Cursor Integration](#cursor-integration)
-4. [Generic AI Agent Integration](#generic-ai-agent-integration)
-5. [Advanced Patterns](#advanced-patterns)
-
-## Quick Start
-
-### Prerequisites
+## 安装
 
 ```bash
-# Install RobotX CLI
-cd cli
-make build
-make install
-
-# Configure credentials
-export ROBOTX_BASE_URL=https://api.robotx.xin
-export ROBOTX_API_KEY=your-api-key-here
-
-# Verify installation
-robotx --help
+curl -fsSL https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/install.sh | bash
 ```
 
-### Basic Deployment
+大陆网络推荐固定当前版本并使用 `mr.robotx.xin` 中转：
 
 ```bash
-# Deploy a new project
-robotx deploy ./my-app --name "My App"
-
-# Output will include:
-# - Project ID: proj_xxx
-# - Build ID: build_xxx
-# - Preview URL: https://api.robotx.xin/preview/proj_xxx
+curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/install.sh \
+  | env ROBOTX_VERSION=v0.6 ROBOTX_GITHUB_PROXY=https://mr.robotx.xin bash
 ```
 
-## Claude Code Integration
-
-### Example 1: Deploy Generated Code
-
-```typescript
-// Claude Code can execute bash commands
-async function deployToRobotX(projectPath: string, projectName: string) {
-  const command = `robotx deploy ${projectPath} --name "${projectName}"`;
-
-  const result = await executeBash(command);
-
-  // Parse output
-  const projectIdMatch = result.stdout.match(/Project (?:created|ready): ([-\w]+)/);
-  const previewUrlMatch = result.stdout.match(/Preview URL: (https:\/\/[^\s]+)/);
-
-  return {
-    projectId: projectIdMatch?.[1],
-    previewUrl: previewUrlMatch?.[1],
-    success: result.exitCode === 0
-  };
-}
-
-// Usage
-const deployment = await deployToRobotX('./generated-app', 'AI Generated App');
-console.log(`Deployed to: ${deployment.previewUrl}`);
-```
-
-### Example 2: Iterative Development
-
-```typescript
-async function redeployProject(projectName: string, projectPath: string) {
-  const command = `robotx deploy ${projectPath} --name "${projectName}"`;
-
-  const result = await executeBash(command);
-
-  // Parse build ID
-  const buildIdMatch = result.stdout.match(/Build started: (build_\w+)/);
-
-  return {
-    buildId: buildIdMatch?.[1],
-    success: result.exitCode === 0
-  };
-}
-
-// Usage in iterative development
-let projectName = 'my-app';
-
-// Make changes
-await modifyCode('./my-app/src/index.ts');
-
-// Redeploy by project name (create-or-update)
-const deployment = await redeployProject(projectName, './my-app');
-console.log(`Build ID: ${deployment.buildId}`);
-```
-
-### Example 3: Status Monitoring
-
-```typescript
-async function waitForBuild(projectId: string, buildId: string): Promise<boolean> {
-  const maxAttempts = 60; // 5 minutes with 5s intervals
-
-  for (let i = 0; i < maxAttempts; i++) {
-    const command = `robotx status --project-id ${projectId} --build-id ${buildId}`;
-    const result = await executeBash(command);
-
-    if (result.stdout.includes('Status: success')) {
-      return true;
-    }
-
-    if (result.stdout.includes('Status: failed')) {
-      // Get logs
-      const logsCommand = `robotx status --project-id ${projectId} --build-id ${buildId} --logs`;
-      const logsResult = await executeBash(logsCommand);
-      console.error('Build failed:', logsResult.stdout);
-      return false;
-    }
-
-    // Wait 5 seconds
-    await new Promise(resolve => setTimeout(resolve, 5000));
-  }
-
-  throw new Error('Build timeout');
-}
-```
-
-## Cursor Integration
-
-### Example 1: Python Integration
-
-```python
-import subprocess
-import re
-import time
-
-def deploy_to_robotx(project_path: str, project_name: str) -> dict:
-    """Deploy a project to RobotX"""
-
-    cmd = ['robotx', 'deploy', project_path, '--name', project_name]
-    result = subprocess.run(cmd, capture_output=True, text=True)
-
-    if result.returncode != 0:
-        raise Exception(f"Deployment failed: {result.stderr}")
-
-    # Parse output
-    project_id = re.search(r'Project (?:created|ready): ([-\w]+)', result.stdout)
-    preview_url = re.search(r'Preview URL: (https://[^\s]+)', result.stdout)
-
-    return {
-        'project_id': project_id.group(1) if project_id else None,
-        'preview_url': preview_url.group(1) if preview_url else None,
-        'output': result.stdout
-    }
-
-# Usage
-deployment = deploy_to_robotx('./my-app', 'My AI App')
-print(f"Deployed to: {deployment['preview_url']}")
-```
-
-### Example 2: Deploy and Publish
-
-```python
-def deploy_and_publish(project_name: str, project_path: str) -> dict:
-    """Deploy project by name and publish to production"""
-
-    # Deploy (create-or-update by name)
-    deploy_cmd = ['robotx', 'deploy', project_path,
-                  '--name', project_name, '--publish']
-    result = subprocess.run(deploy_cmd, capture_output=True, text=True)
-
-    if result.returncode != 0:
-        raise Exception(f"Deploy failed: {result.stderr}")
-
-    # Parse output
-    build_id = re.search(r'Build started: (build_\w+)', result.stdout)
-    prod_url = re.search(r'Production URL: (https://[^\s]+)', result.stdout)
-
-    return {
-        'build_id': build_id.group(1) if build_id else None,
-        'production_url': prod_url.group(1) if prod_url else None,
-        'output': result.stdout
-    }
-
-# Usage
-result = deploy_and_publish('my-app', './my-app')
-print(f"Published to: {result['production_url']}")
-```
-
-### Example 3: Status Check with Retry
-
-```python
-def check_build_status(project_id: str, build_id: str,
-                       max_retries: int = 60) -> str:
-    """Check build status with retry"""
-
-    for i in range(max_retries):
-        cmd = ['robotx', 'status',
-               '--project-id', project_id,
-               '--build-id', build_id]
-        result = subprocess.run(cmd, capture_output=True, text=True)
-
-        if 'Status: success' in result.stdout:
-            return 'success'
-
-        if 'Status: failed' in result.stdout:
-            # Get logs
-            logs_cmd = cmd + ['--logs']
-            logs_result = subprocess.run(logs_cmd, capture_output=True, text=True)
-            raise Exception(f"Build failed:\n{logs_result.stdout}")
-
-        time.sleep(5)
-
-    raise Exception('Build timeout')
-
-# Usage
-status = check_build_status('proj_abc123', 'build_xyz789')
-print(f"Build status: {status}")
-```
-
-## Generic AI Agent Integration
-
-### Bash Script Integration
+## 登录和检查
 
 ```bash
-#!/bin/bash
-
-# Function to deploy project
-deploy_project() {
-    local project_path=$1
-    local project_name=$2
-
-    echo "Deploying $project_name from $project_path..."
-
-    output=$(robotx deploy "$project_path" --name "$project_name" 2>&1)
-    exit_code=$?
-
-    if [ $exit_code -eq 0 ]; then
-        project_id=$(echo "$output" | grep -oP 'Project (?:created|ready): \K[-\w]+')
-        preview_url=$(echo "$output" | grep -oP 'Preview URL: \K\S+')
-
-        echo "Success!"
-        echo "Project ID: $project_id"
-        echo "Preview URL: $preview_url"
-
-        return 0
-    else
-        echo "Deployment failed:"
-        echo "$output"
-        return 1
-    fi
-}
-
-# Function to redeploy project by name
-redeploy_project() {
-    local project_name=$1
-    local project_path=$2
-
-    echo "Redeploying project $project_name..."
-
-    output=$(robotx deploy "$project_path" --name "$project_name" 2>&1)
-    exit_code=$?
-
-    if [ $exit_code -eq 0 ]; then
-        build_id=$(echo "$output" | grep -oP 'Build started: \K\w+')
-        echo "Success! Build ID: $build_id"
-        return 0
-    else
-        echo "Redeploy failed:"
-        echo "$output"
-        return 1
-    fi
-}
-
-# Usage
-redeploy_project "My App" "./my-app"
+robotx login --base-url https://robotx.xin
+robotx doctor --output json
 ```
 
-### Node.js Integration
-
-```javascript
-const { exec } = require('child_process');
-const util = require('util');
-const execPromise = util.promisify(exec);
-
-async function deployToRobotX(projectPath, projectName) {
-  try {
-    const { stdout, stderr } = await execPromise(
-      `robotx deploy ${projectPath} --name "${projectName}"`
-    );
-
-    // Parse output
-    const projectIdMatch = stdout.match(/Project (?:created|ready): ([-\w]+)/);
-    const previewUrlMatch = stdout.match(/Preview URL: (https:\/\/[^\s]+)/);
-
-    return {
-      success: true,
-      projectId: projectIdMatch?.[1],
-      previewUrl: previewUrlMatch?.[1],
-      output: stdout
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error.message,
-      output: error.stdout || error.stderr
-    };
-  }
-}
-
-// Usage
-(async () => {
-  const result = await deployToRobotX('./my-app', 'My App');
-  if (result.success) {
-    console.log(`Deployed to: ${result.previewUrl}`);
-  } else {
-    console.error(`Deployment failed: ${result.error}`);
-  }
-})();
-```
-
-## Advanced Patterns
-
-### Pattern 1: Multi-Environment Deployment
+CI 或非交互环境使用环境变量：
 
 ```bash
-#!/bin/bash
-
-# Deploy to preview
-deploy_preview() {
-    robotx deploy . --name "$1"
-}
-
-# Test in preview
-test_preview() {
-    local preview_url=$1
-    # Run tests against preview URL
-    curl -f "$preview_url" || return 1
-}
-
-# Promote to production
-promote_to_production() {
-    local project_id=$1
-    local build_id=$2
-    robotx publish --project-id "$project_id" --build-id "$build_id"
-}
-
-# Full workflow
-project_name="My App"
-deployment=$(deploy_preview "$project_name")
-project_id=$(echo "$deployment" | grep -oP 'Project (?:created|ready): \K[-\w]+')
-build_id=$(echo "$deployment" | grep -oP 'Build started: \K\w+')
-preview_url=$(echo "$deployment" | grep -oP 'Preview URL: \K\S+')
-
-if test_preview "$preview_url"; then
-    echo "Tests passed, promoting to production..."
-    promote_to_production "$project_id" "$build_id"
-else
-    echo "Tests failed, not promoting"
-    exit 1
-fi
+export ROBOTX_BASE_URL=https://robotx.xin
+export ROBOTX_API_KEY=your-api-key
 ```
 
-### Pattern 2: Continuous Deployment
-
-```python
-import subprocess
-import time
-import hashlib
-import os
-
-def get_directory_hash(path: str) -> str:
-    """Calculate hash of directory contents"""
-    hasher = hashlib.md5()
-    for root, dirs, files in os.walk(path):
-        for file in sorted(files):
-            filepath = os.path.join(root, file)
-            with open(filepath, 'rb') as f:
-                hasher.update(f.read())
-    return hasher.hexdigest()
-
-def watch_and_deploy(project_path: str, project_name: str, interval: int = 30):
-    """Watch directory and auto-deploy on changes"""
-
-    last_hash = get_directory_hash(project_path)
-    print(f"Watching {project_path} for changes...")
-
-    while True:
-        time.sleep(interval)
-
-        current_hash = get_directory_hash(project_path)
-        if current_hash != last_hash:
-            print("Changes detected, deploying...")
-
-            cmd = ['robotx', 'deploy', project_path,
-                   '--name', project_name]
-            result = subprocess.run(cmd, capture_output=True, text=True)
-
-            if result.returncode == 0:
-                print("Deployment successful!")
-            else:
-                print(f"Deployment failed: {result.stderr}")
-
-            last_hash = current_hash
-
-# Usage
-watch_and_deploy('./my-app', 'my-app', interval=30)
-```
-
-### Pattern 3: Rollback on Failure
-
-```python
-def deploy_with_rollback(project_id: str, project_name: str, project_path: str,
-                         previous_build_id: str) -> dict:
-    """Deploy with automatic rollback on failure"""
-
-    # Deploy by name (create-or-update)
-    deploy_cmd = ['robotx', 'deploy', project_path,
-                  '--name', project_name]
-    result = subprocess.run(deploy_cmd, capture_output=True, text=True)
-
-    if result.returncode != 0:
-        raise Exception(f"Deploy failed: {result.stderr}")
-
-    # Get new build ID
-    build_id = re.search(r'Build started: (build_\w+)', result.stdout)
-    new_build_id = build_id.group(1) if build_id else None
-
-    # Check build status
-    try:
-        status = check_build_status(project_id, new_build_id)
-
-        if status == 'success':
-            # Publish new build
-            publish_cmd = ['robotx', 'publish',
-                          '--project-id', project_id,
-                          '--build-id', new_build_id]
-            subprocess.run(publish_cmd, check=True)
-
-            return {
-                'success': True,
-                'build_id': new_build_id
-            }
-    except Exception as e:
-        # Rollback to previous build
-        print(f"Deployment failed, rolling back to {previous_build_id}...")
-        rollback_cmd = ['robotx', 'publish',
-                       '--project-id', project_id,
-                       '--build-id', previous_build_id]
-        subprocess.run(rollback_cmd, check=True)
-
-        return {
-            'success': False,
-            'error': str(e),
-            'rolled_back_to': previous_build_id
-        }
-
-# Usage
-result = deploy_with_rollback('proj_abc123', 'my-app', './my-app', 'build_old456')
-if result['success']:
-    print(f"Deployed successfully: {result['build_id']}")
-else:
-    print(f"Deployment failed, rolled back: {result['error']}")
-```
-
-## Best Practices
-
-### 1. Error Handling
-
-Always check exit codes and parse error messages:
+## 新建并发布
 
 ```bash
-if ! robotx deploy . --name "My App"; then
-    echo "Deployment failed"
-    exit 1
-fi
+robotx deploy . \
+  --create \
+  --target main \
+  --name my-app \
+  --access open \
+  --verify-url \
+  --output json
 ```
 
-### 2. Environment Variables
+说明：
 
-Use environment variables for credentials:
+- `--create` 会创建新项目；同名项目存在时失败。
+- `--target main` 会把远端项目写入本地 `.robotx/targets.json`。
+- `--access open` 才表示生产链接允许匿名访问；`--visibility public` 不等于匿名可访问。
+- RobotX 当前只支持本地构建上传产物，`--local-build` 必须保持为 `true`。
+
+## 更新已有目标
 
 ```bash
-export ROBOTX_BASE_URL=https://api.robotx.xin
-export ROBOTX_API_KEY=$SECRET_API_KEY
-
-robotx deploy . --name "My App"
+robotx deploy . \
+  --update \
+  --target main \
+  --version-label v1.2.3 \
+  --source-ref "tag:v1.2.3@$(git rev-parse HEAD)" \
+  --output json
 ```
 
-### 3. Output Parsing
-
-Use regex to extract structured data:
-
-```python
-import re
-
-output = "Project ready: 02f7e0bb-33bb-4b67-bd83-0ae8015ea737"
-project_id = re.search(r'[-\w]+$', output).group(0)
-```
-
-### 4. Timeout Handling
-
-Set appropriate timeouts for long-running operations:
+需要明确更新某个远端项目时：
 
 ```bash
-robotx deploy . --name "My App" --timeout 1200  # 20 minutes
+robotx deploy . --update --project-id proj_123 --output json
 ```
 
-### 5. Logging
+只有在明确需要旧版“按项目名创建或复用”行为时，才使用：
 
-Capture and log all output for debugging:
-
-```python
-result = subprocess.run(cmd, capture_output=True, text=True)
-with open('deployment.log', 'a') as f:
-    f.write(result.stdout)
-    f.write(result.stderr)
+```bash
+robotx deploy . --upsert --name my-app --output json
 ```
 
-## Troubleshooting
+## 本地目标记录
 
-### Common Issues
+```bash
+robotx targets --output json
+robotx targets remove main --output json
+```
 
-1. **CLI not found**
-   ```bash
-   which robotx
-   # If not found, add to PATH or use full path
-   ```
+`targets remove` 只删除本地记录，不删除远端 RobotX 项目。
 
-2. **Authentication failed**
-   ```bash
-   # Check credentials
-   echo $ROBOTX_API_KEY
-   # Verify with status command
-   robotx status --project-id test
-   ```
+## 访问策略
 
-3. **Build timeout**
-   ```bash
-   # Increase timeout
-   robotx deploy . --name "My App" --timeout 1200
-   ```
+```bash
+robotx access status --project-id proj_123 --output json
+robotx access open --project-id proj_123 --output json
+robotx access login --project-id proj_123 --output json
+robotx access private --project-id proj_123 --output json
+```
 
-4. **Parse errors**
-   ```bash
-   # Use --verbose for more output
-   robotx deploy . --name "My App" --verbose
-   ```
+## 版本、状态和发布
 
-## Support
+```bash
+robotx versions --project-id proj_123 --limit 20 --output json
+robotx status --project-id proj_123 --build-id build_456 --output json
+robotx publish --project-id proj_123 --build-id build_456 --output json
+```
 
-For more information:
-- CLI Documentation: [README.md](../README.md)
-- Skill Documentation: [skills/robotx/SKILL.md](../skills/robotx/SKILL.md)
-- Agent Pages Skill: [skills/agent-pages/SKILL.md](../skills/agent-pages/SKILL.md)
-- API Reference: https://robotx.xin/docs
+`versions` 也支持别名：
+
+```bash
+robotx builds --project-id proj_123 --output json
+```
+
+## 删除远端项目
+
+远端项目删除是破坏性操作，必须先确认用户确实要删除项目，再执行：
+
+```bash
+robotx projects delete --project-id proj_123 --yes --output json
+```
+
+删除远端项目不会自动清理本地 `.robotx/targets.json`。需要时再删除本地目标记录：
+
+```bash
+robotx targets remove main --output json
+```
+
+## GitHub Actions
+
+```yaml
+- uses: robotx-dev/cli@v0.6
+  with:
+    base-url: ${{ secrets.ROBOTX_BASE_URL }}
+    api-key: ${{ secrets.ROBOTX_API_KEY }}
+    project-path: .
+    project-name: my-app
+    access: open
+    verify-url: "true"
+```
+
+CI 固定更新已有项目时，用 `extra-args` 传入项目 ID：
+
+```yaml
+extra-args: --project-id ${{ secrets.ROBOTX_PROJECT_ID }}
+```
+
+如果 CI 需要按项目名复用已有项目，可显式使用 `extra-args: --upsert`。不要依赖临时 checkout 里的 `.robotx/targets.json` 持久化目标记录。
+
+## 不再支持的能力
+
+- `robotx logs` 和 `status --logs` 不再提供远程构建日志。
+- `robotx mcp` 当前是占位命令，不作为生产集成方式。

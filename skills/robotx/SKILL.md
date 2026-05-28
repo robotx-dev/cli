@@ -11,7 +11,7 @@ Use this skill when an agent needs to deploy or manage project versions on Robot
 
 ## Quick start
 
-- Check CLI availability: `which robotx || which robotx_cli`
+- Check CLI availability: `command -v robotx`.
 - Install (binary-first, no Go required):
   - `curl -fsSL https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/install.sh | bash`
   - In mainland China or slow GitHub networks, prefer the default RobotX mirror relay with a pinned version:
