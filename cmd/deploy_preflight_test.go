@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/haibingtown/robotx_cli/pkg/client"
+	"github.com/robotx-dev/cli/pkg/client"
 )
 
 func TestEnsureProjectNameAvailableRejectsExistingName(t *testing.T) {

@@ -218,7 +218,7 @@ for project in projects:
 ## 📁 项目结构
 
 ```
-haibingtown/robotx_cli/
+robotx-dev/cli/
 ├── cmd/                    # 命令实现 (7 个文件)
 ├── pkg/client/             # API 客户端
 ├── examples/               # 客户端库 (Python + TypeScript)

@@ -103,36 +103,36 @@ robotx --help
 如果缺失，优先安装 release 二进制：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/install.sh | bash
 ```
 
 大陆网络或 GitHub 下载慢时，不要反复等待 `latest`。默认使用 `mr.robotx.xin` 中转并固定版本：
 
 ```bash
-curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh \
+curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/install.sh \
   | env ROBOTX_VERSION=v0.5 ROBOTX_GITHUB_PROXY=https://mr.robotx.xin bash
 ```
 
 如果 `mr.robotx.xin` 拉 GitHub release 包时返回 502 或下载超时，使用备用线路下载 release 包：
 
 ```bash
-curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh \
+curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/install.sh \
   | env ROBOTX_VERSION=v0.5 ROBOTX_GITHUB_PROXY=https://gh-proxy.com bash
 ```
 
 如果有内部 release 镜像：
 
 ```bash
-curl -fsSL https://<mirror>/haibingtown/robotx_cli/main/scripts/install.sh \
+curl -fsSL https://<mirror>/robotx-dev/cli/main/scripts/install.sh \
   | env ROBOTX_VERSION=v0.5 \
-      ROBOTX_DOWNLOAD_BASE_URL=https://<mirror>/haibingtown/robotx_cli/releases/download \
+      ROBOTX_DOWNLOAD_BASE_URL=https://<mirror>/robotx-dev/cli/releases/download \
       bash
 ```
 
 只有明确需要源码安装时，才使用：
 
 ```bash
-go install github.com/haibingtown/robotx_cli/cmd/robotx@latest
+go install github.com/robotx-dev/cli/cmd/robotx@latest
 ```
 
 ### 2. 认证预检

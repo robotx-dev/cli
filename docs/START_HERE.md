@@ -1,6 +1,6 @@
 # Start Here
 
-如果你第一次使用 `robotx_cli`，按下面顺序阅读：
+如果你第一次使用 RobotX CLI，按下面顺序阅读：
 
 1. [README.md](../README.md): 当前可用功能、命令契约、Action/Release 说明
 2. [QUICKSTART.md](QUICKSTART.md): 最短可执行流程
@@ -10,7 +10,7 @@
 ## 最短路径
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/install.sh | bash
 export ROBOTX_BASE_URL=https://your-robotx-server.com
 export ROBOTX_API_KEY=your-api-key
 robotx deploy . --name my-app --output json

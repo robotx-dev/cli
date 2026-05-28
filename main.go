@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/haibingtown/robotx_cli/cmd"
+	"github.com/robotx-dev/cli/cmd"
 )
 
 func main() {

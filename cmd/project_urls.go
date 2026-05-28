@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/haibingtown/robotx_cli/pkg/client"
+	"github.com/robotx-dev/cli/pkg/client"
 )
 
 func projectPreviewURL(project *client.Project, fallbackBaseURL string) string {

@@ -22,14 +22,14 @@ RobotX CLI 用于将应用部署到 RobotX 平台，支持 `login` / `deploy` / 
 ### 方式 1: 下载安装脚本（推荐，无需 Go）
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/install.sh | bash
 ```
 
 可选参数：
 
 - `ROBOTX_VERSION=latest`（默认）或 `vX.Y.Z`
 - `ROBOTX_INSTALL_DIR=$HOME/.local/bin`
-- `ROBOTX_REPO=haibingtown/robotx_cli`
+- `ROBOTX_REPO=robotx-dev/cli`
 - `ROBOTX_AUTO_PATH=1`（默认，自动写入 shell profile）或 `0`
 - `ROBOTX_CONNECT_TIMEOUT=10`（默认连接超时秒数）
 - `ROBOTX_MAX_TIME=300`（默认单次下载最长秒数）
@@ -38,12 +38,12 @@ curl -fsSL https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts
 - `ROBOTX_CURL_PROGRESS=1`（本地默认显示下载进度；CI 默认关闭）
 - `ROBOTX_GITHUB_API_BASE=https://api.github.com`（解析 latest 使用）
 - `ROBOTX_GITHUB_PROXY=https://your-proxy.example.com`（给 GitHub release URL 加代理前缀）
-- `ROBOTX_DOWNLOAD_BASE_URL=https://your-mirror.example.com/haibingtown/robotx_cli/releases/download`（直接使用 release 资产镜像）
+- `ROBOTX_DOWNLOAD_BASE_URL=https://your-mirror.example.com/robotx-dev/cli/releases/download`（直接使用 release 资产镜像）
 
 大陆网络默认推荐使用 `mr.robotx.xin` 中转，并固定版本跳过 GitHub API：
 
 ```bash
-curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh \
+curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/install.sh \
   | env ROBOTX_VERSION=v0.5 \
       ROBOTX_GITHUB_PROXY=https://mr.robotx.xin \
       bash
@@ -52,7 +52,7 @@ curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/r
 如果 `mr.robotx.xin` 拉 GitHub release 包时返回 502 或下载超时，可以保留 `mr.robotx.xin` 获取安装脚本，并把 release 下载代理切到备用线路 `gh-proxy.com`：
 
 ```bash
-curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh \
+curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/install.sh \
   | env ROBOTX_VERSION=v0.5 \
       ROBOTX_GITHUB_PROXY=https://gh-proxy.com \
       bash
@@ -61,28 +61,28 @@ curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/r
 如果你有内部 release 镜像，优先使用镜像源：
 
 ```bash
-curl -fsSL https://your-mirror.example.com/haibingtown/robotx_cli/main/scripts/install.sh \
+curl -fsSL https://your-mirror.example.com/robotx-dev/cli/main/scripts/install.sh \
   | env ROBOTX_VERSION=v0.5 \
-      ROBOTX_DOWNLOAD_BASE_URL=https://your-mirror.example.com/haibingtown/robotx_cli/releases/download \
+      ROBOTX_DOWNLOAD_BASE_URL=https://your-mirror.example.com/robotx-dev/cli/releases/download \
       bash
 ```
 
 ### 方式 2: 从源码安装
 
 ```bash
-go install github.com/haibingtown/robotx_cli/cmd/robotx@latest
+go install github.com/robotx-dev/cli/cmd/robotx@latest
 ```
 
 ### 方式 3: 使用 Go 安装并自动配置 PATH
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/go-install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/go-install.sh | bash
 ```
 
 可选参数：
 
-- `ROBOTX_GO_PACKAGE=github.com/haibingtown/robotx_cli/cmd/robotx@latest`
-- `ROBOTX_LEGACY_GO_PACKAGE=github.com/haibingtown/robotx_cli@latest`（主包安装失败时回退）
+- `ROBOTX_GO_PACKAGE=github.com/robotx-dev/cli/cmd/robotx@latest`
+- `ROBOTX_LEGACY_GO_PACKAGE=github.com/robotx-dev/cli@latest`（主包安装失败时回退）
 - `ROBOTX_INSTALL_DIR=$HOME/.local/bin`
 - `ROBOTX_AUTO_PATH=1`（默认，自动写入 shell profile）或 `0`
 

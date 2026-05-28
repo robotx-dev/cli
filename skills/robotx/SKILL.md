@@ -13,14 +13,14 @@ Use this skill when an agent needs to deploy or manage project versions on Robot
 
 - Check CLI availability: `which robotx || which robotx_cli`
 - Install (binary-first, no Go required):
-  - `curl -fsSL https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh | bash`
+  - `curl -fsSL https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/install.sh | bash`
   - In mainland China or slow GitHub networks, prefer the default RobotX mirror relay with a pinned version:
-    - `curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh | env ROBOTX_VERSION=v0.5 ROBOTX_GITHUB_PROXY=https://mr.robotx.xin bash`
+    - `curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/install.sh | env ROBOTX_VERSION=v0.5 ROBOTX_GITHUB_PROXY=https://mr.robotx.xin bash`
   - If the default relay returns 502 or times out while downloading GitHub release assets, use the fallback release proxy:
-    - `curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh | env ROBOTX_VERSION=v0.5 ROBOTX_GITHUB_PROXY=https://gh-proxy.com bash`
+    - `curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/install.sh | env ROBOTX_VERSION=v0.5 ROBOTX_GITHUB_PROXY=https://gh-proxy.com bash`
 - Fallback install (if you explicitly want source install):
-  - `go install github.com/haibingtown/robotx_cli/cmd/robotx@latest`
-  - Or auto PATH setup: `curl -fsSL https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/go-install.sh | bash`
+  - `go install github.com/robotx-dev/cli/cmd/robotx@latest`
+  - Or auto PATH setup: `curl -fsSL https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/go-install.sh | bash`
 
 ## Configure
 

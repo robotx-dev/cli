@@ -3,14 +3,14 @@
 ## 1) 安装（推荐二进制）
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/install.sh | bash
 robotx --version
 ```
 
 大陆网络或 GitHub release 下载很慢时，默认推荐使用 `mr.robotx.xin` 中转，并固定版本避免卡在 `latest` 解析：
 
 ```bash
-curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh \
+curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/install.sh \
   | env ROBOTX_VERSION=v0.5 ROBOTX_GITHUB_PROXY=https://mr.robotx.xin bash
 robotx --version
 ```
@@ -18,7 +18,7 @@ robotx --version
 如果 `mr.robotx.xin` 下载 GitHub release 包时返回 502 或超时，使用备用线路下载 release 包：
 
 ```bash
-curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh \
+curl -fsSL https://mr.robotx.xin/https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/install.sh \
   | env ROBOTX_VERSION=v0.5 ROBOTX_GITHUB_PROXY=https://gh-proxy.com bash
 robotx --version
 ```
@@ -26,7 +26,7 @@ robotx --version
 或使用 Go（自动写入 PATH）：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/go-install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/go-install.sh | bash
 robotx --version
 ```
 
@@ -35,7 +35,7 @@ robotx --version
 若只想用纯 `go install`：
 
 ```bash
-go install github.com/haibingtown/robotx_cli/cmd/robotx@latest
+go install github.com/robotx-dev/cli/cmd/robotx@latest
 ```
 
 ## 2) 配置

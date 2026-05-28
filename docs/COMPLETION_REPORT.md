@@ -78,7 +78,7 @@
 ## 📁 项目结构
 
 ```
-haibingtown/robotx_cli/
+robotx-dev/cli/
 ├── cmd/                          # 命令实现
 │   ├── root.go                   # 根命令和全局配置
 │   ├── deploy.go                 # 部署命令

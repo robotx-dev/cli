@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-GO_PACKAGE="${ROBOTX_GO_PACKAGE:-github.com/haibingtown/robotx_cli/cmd/robotx@latest}"
+GO_PACKAGE="${ROBOTX_GO_PACKAGE:-github.com/robotx-dev/cli/cmd/robotx@latest}"
 INSTALL_DIR="${ROBOTX_INSTALL_DIR:-}"
 AUTO_PATH="${ROBOTX_AUTO_PATH:-1}"
-LEGACY_GO_PACKAGE="${ROBOTX_LEGACY_GO_PACKAGE:-github.com/haibingtown/robotx_cli@latest}"
+LEGACY_GO_PACKAGE="${ROBOTX_LEGACY_GO_PACKAGE:-github.com/robotx-dev/cli@latest}"
 
 if ! command -v go >/dev/null 2>&1; then
   echo "go is required" >&2
@@ -24,7 +24,7 @@ mkdir -p "${INSTALL_DIR}"
 
 echo "Installing ${GO_PACKAGE} to ${INSTALL_DIR}..."
 if ! GOBIN="${INSTALL_DIR}" go install "${GO_PACKAGE}"; then
-  if [[ "${GO_PACKAGE}" == "github.com/haibingtown/robotx_cli/cmd/robotx@latest" ]]; then
+  if [[ "${GO_PACKAGE}" == "github.com/robotx-dev/cli/cmd/robotx@latest" ]]; then
     echo "Primary package install failed, trying legacy package ${LEGACY_GO_PACKAGE}..."
     GOBIN="${INSTALL_DIR}" go install "${LEGACY_GO_PACKAGE}"
   else

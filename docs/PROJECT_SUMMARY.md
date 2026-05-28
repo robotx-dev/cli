@@ -112,7 +112,7 @@ RobotX CLI 是一个命令行工具，旨在将 RobotX Server 的在线部署能
 ## 项目结构
 
 ```
-haibingtown/robotx_cli/
+robotx-dev/cli/
 ├── cmd/
 │   └── robotx/
 │       └── main.go              # CLI 入口点

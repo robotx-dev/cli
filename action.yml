@@ -1,6 +1,6 @@
 name: "RobotX Deploy"
 description: "Deploy an app to RobotX by downloading a released robotx binary and invoking the CLI"
-author: "haibingtown"
+author: "robotx-dev"
 
 inputs:
   base-url:
@@ -76,7 +76,7 @@ inputs:
   repo:
     description: "Repository owner/name hosting release artifacts"
     required: false
-    default: "haibingtown/robotx_cli"
+    default: "robotx-dev/cli"
   download-base-url:
     description: "Optional release asset mirror base URL, ending before the release tag"
     required: false

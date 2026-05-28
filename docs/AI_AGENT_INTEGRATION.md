@@ -21,7 +21,7 @@
 ## 1) 安装 CLI（二进制）
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/haibingtown/robotx_cli/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/robotx-dev/cli/main/scripts/install.sh | bash
 ```
 
 ## 2) 传入凭证
@@ -100,7 +100,7 @@ else:
 仓库内置 `action.yml`，可直接使用：
 
 ```yaml
-- uses: haibingtown/robotx_cli@v1
+- uses: robotx-dev/cli@v0.5
   with:
     base-url: ${{ secrets.ROBOTX_BASE_URL }}
     api-key: ${{ secrets.ROBOTX_API_KEY }}

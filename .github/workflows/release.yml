@@ -50,7 +50,7 @@ jobs:
 
             OUT_BIN="dist/${BIN_NAME}"
             CGO_ENABLED=0 GOOS="${GOOS}" GOARCH="${GOARCH}" \
-              go build -trimpath -ldflags "-s -w -X github.com/haibingtown/robotx_cli/cmd.version=${VERSION}" \
+              go build -trimpath -ldflags "-s -w -X github.com/robotx-dev/cli/cmd.version=${VERSION}" \
               -o "${OUT_BIN}" ./main.go
 
             ARCHIVE_BASE="robotx_${VERSION}_${GOOS}_${GOARCH}"

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO="${ROBOTX_REPO:-haibingtown/robotx_cli}"
+REPO="${ROBOTX_REPO:-robotx-dev/cli}"
 REQUESTED_VERSION="${ROBOTX_VERSION:-latest}"
 INSTALL_DIR="${ROBOTX_INSTALL_DIR:-${HOME}/.local/bin}"
 AUTO_PATH="${ROBOTX_AUTO_PATH:-1}"
